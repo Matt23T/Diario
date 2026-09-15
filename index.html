@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f2f2f7">
+
+<title>Diario</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+                 "SF Pro Text", Helvetica, Arial, sans-serif;
+    background: #f2f2f7;
+    color: #1c1c1e;
+}
+
+button,
+input,
+textarea,
+select {
+    font: inherit;
+}
+
+button {
+    border: 0;
+    background: none;
+}
+
+.app {
+    max-width: 700px;
+    margin: 0 auto;
+    min-height: 100vh;
+    padding-bottom: 40px;
+}
+
+/* HEADER */
+
+.header {
+    padding: 58px 20px 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: -1px;
+}
+
+.header button {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #ffcc00;
+    font-size: 28px;
+    line-height: 42px;
+    font-weight: 400;
+}
+
+/* SEARCH */
+
+.search {
+    margin: 0 16px 18px;
+    background: rgba(118,118,128,.12);
+    border-radius: 12px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.search span {
+    color: #8e8e93;
+    font-size: 18px;
+}
+
+.search input {
+    width: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    font-size: 17px;
+}
+
+/* NOTES LIST */
+
+.notes {
+    padding: 0 16px;
+}
+
+.note-card {
+    background: white;
+    border-radius: 17px;
+    padding: 17px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.05);
+    cursor: pointer;
+}
+
+.note-card:active {
+    transform: scale(.985);
+}
+
+.note-card-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.note-title {
+    font-size: 20px;
+    font-weight: 650;
+}
+
+.note-date {
+    color: #8e8e93;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.note-preview {
+    margin-top: 8px;
+    color: #636366;
+    font-size: 15px;
+    line-height: 1.35;
+}
+
+.note-stats {
+    margin-top: 12px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.badge {
+    background: #f2f2f7;
+    border-radius: 8px;
+    padding: 5px 8px;
+    color: #636366;
+    font-size: 12px;
+}
+
+/* EMPTY */
+
+.empty {
+    text-align: center;
+    color: #8e8e93;
+    padding: 80px 30px;
+}
+
+.empty-icon {
+    font-size: 50px;
+    margin-bottom: 15px;
+}
+
+/* EDITOR */
+
+.editor {
+    display: none;
+    min-height: 100vh;
+}
+
+.editor.active {
+    display: block;
+}
+
+.editor-header {
+    padding: 52px 16px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.back {
+    color: #007aff;
+    font-size: 17px;
+}
+
+.editor-header .done {
+    color: #007aff;
+    font-weight: 600;
+}
+
+.editor-content {
+    padding: 10px 18px 50px;
+}
+
+.title-input {
+    width: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -.7px;
+    margin-bottom: 8px;
+}
+
+.body-input {
+    width: 100%;
+    min-height: 110px;
+    resize: none;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    font-size: 17px;
+    line-height: 1.45;
+}
+
+/* ELEMENTS */
+
+.elements-title {
+    margin-top: 22px;
+    margin-bottom: 10px;
+    color: #8e8e93;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+
+.element {
+    background: white;
+    border-radius: 16px;
+    padding: 15px;
+    margin-bottom: 10px;
+}
+
+.element-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.element-name {
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.element-type {
+    color: #8e8e93;
+    font-size: 12px;
+    margin-top: 3px;
+}
+
+.delete-element {
+    color: #ff3b30;
+    font-size: 14px;
+}
+
+/* CHECKBOX */
+
+.check-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 13px;
+}
+
+.checkbox {
+    width: 25px;
+    height: 25px;
+    border: 2px solid #c7c7cc;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.checkbox.checked {
+    background: #34c759;
+    border-color: #34c759;
+    color: white;
+}
+
+.check-text.done-text {
+    text-decoration: line-through;
+    color: #8e8e93;
+}
+
+/* COUNTER */
+
+.counter-box {
+    margin-top: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.counter-value {
+    font-size: 34px;
+    font-weight: 700;
+}
+
+.counter-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.counter-buttons button {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #f2f2f7;
+    font-size: 24px;
+}
+
+.counter-buttons button:last-child {
+    background: #ffcc00;
+}
+
+/* TIMER */
+
+.timer-box {
+    margin-top: 14px;
+    background: #f2f2f7;
+    border-radius: 12px;
+    padding: 13px;
+}
+
+.timer-value {
+    font-size: 26px;
+    font-weight: 650;
+}
+
+.timer-sub {
+    margin-top: 3px;
+    color: #8e8e93;
+    font-size: 13px;
+}
+
+.timer-action {
+    margin-top: 10px;
+    width: 100%;
+    background: #ffcc00;
+    padding: 10px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+/* ADD */
+
+.add-element {
+    margin-top: 18px;
+    width: 100%;
+    background: white;
+    border-radius: 15px;
+    padding: 16px;
+    color: #007aff;
+    text-align: left;
+    font-weight: 600;
+}
+
+/* MODAL */
+
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.35);
+    z-index: 10;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.sheet {
+    width: 100%;
+    max-width: 700px;
+    background: #f2f2f7;
+    border-radius: 22px 22px 0 0;
+    padding: 15px 16px calc(20px + env(safe-area-inset-bottom));
+}
+
+.sheet h2 {
+    margin: 5px 0 15px;
+    font-size: 21px;
+}
+
+.form-input {
+    width: 100%;
+    border: 0;
+    background: white;
+    border-radius: 12px;
+    padding: 13px;
+    outline: 0;
+    margin-bottom: 10px;
+}
+
+.type-button {
+    width: 100%;
+    background: white;
+    border-radius: 12px;
+    padding: 14px;
+    text-align: left;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.cancel {
+    width: 100%;
+    background: #e5e5ea;
+    border-radius: 12px;
+    padding: 14px;
+    margin-top: 7px;
+    font-weight: 600;
+}
+
+@media (min-width: 700px) {
+    body {
+        background: #e5e5ea;
+    }
+
+    .app {
+        background: #f2f2f7;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- HOME -->
+    <div id="home">
+
+        <div class="header">
+            <h1>Diario</h1>
+            <button onclick="newNote()">+</button>
+        </div>
+
+        <div class="search">
+            <span>⌕</span>
+            <input id="searchInput"
+                   placeholder="Cerca"
+                   oninput="renderNotes()">
+        </div>
+
+        <div id="notesList" class="notes"></div>
+
+    </div>
+
+
+    <!-- EDITOR -->
+    <div id="editor" class="editor">
+
+        <div class="editor-header">
+            <button class="back" onclick="closeEditor()">‹ Diario</button>
+            <button class="done" onclick="saveCurrentNote()">Fine</button>
+        </div>
+
+        <div class="editor-content">
+
+            <input
+                id="noteTitle"
+                class="title-input"
+                placeholder="Titolo">
+
+            <textarea
+                id="noteBody"
+                class="body-input"
+                placeholder="Scrivi qualcosa..."></textarea>
+
+            <div class="elements-title">
+                Elementi
+            </div>
+
+            <div id="elementsList"></div>
+
+            <button class="add-element" onclick="openElementModal()">
+                ＋ Aggiungi elemento
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ELEMENT MODAL -->
+
+<div id="elementModal" class="modal">
+
+    <div class="sheet">
+
+        <h2>Nuovo elemento</h2>
+
+        <input
+            id="elementName"
+            class="form-input"
+            placeholder="Nome, es. Sigarette">
+
+        <button class="type-button"
+                onclick="addElement('check')">
+            <span>☑️ Lista spuntabile</span>
+            <span>›</span>
+        </button>
+
+        <button class="type-button"
+                onclick="addElement('counter')">
+            <span>🔢 Contatore</span>
+            <span>›</span>
+        </button>
+
+        <button class="type-button"
+                onclick="addElement('timer')">
+            <span>⏱️ Timer dall'ultima registrazione</span>
+            <span>›</span>
+        </button>
+
+        <button class="type-button"
+                onclick="addElement('counterTimer')">
+            <span>🚬 Contatore + Timer</span>
+            <span>›</span>
+        </button>
+
+        <button class="cancel" onclick="closeElementModal()">
+            Annulla
+        </button>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* =========================
+   DATABASE LOCALE
+========================= */
+
+let notes = JSON.parse(localStorage.getItem("diario_notes")) || [];
+
+let currentNoteId = null;
+
+
+/* =========================
+   UTILS
+========================= */
+
+function saveDatabase() {
+    localStorage.setItem("diario_notes", JSON.stringify(notes));
+}
+
+function generateId() {
+    return Date.now().toString() + Math.random().toString(16).slice(2);
+}
+
+function formatDate(dateString) {
+
+    const d = new Date(dateString);
+
+    return d.toLocaleDateString("it-IT", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+    });
+}
+
+
+/* =========================
+   HOME
+========================= */
+
+function renderNotes() {
+
+    const container = document.getElementById("notesList");
+
+    const search =
+        document.getElementById("searchInput").value
+        .toLowerCase();
+
+    const filtered = notes.filter(note => {
+
+        return (
+            note.title.toLowerCase().includes(search) ||
+            note.body.toLowerCase().includes(search)
+        );
+
+    });
+
+    if (filtered.length === 0) {
+
+        container.innerHTML = `
+            <div class="empty">
+                <div class="empty-icon">📝</div>
+                <div>Nessuna nota</div>
+                <div style="font-size:14px;margin-top:6px;">
+                    Tocca + per crearne una
+                </div>
+            </div>
+        `;
+
+        return;
+    }
+
+    container.innerHTML = filtered.map(note => {
+
+        const checks =
+            note.elements.filter(e => e.type === "check");
+
+        const completed =
+            checks.filter(e => e.completed).length;
+
+        const counters =
+            note.elements.filter(
+                e => e.type === "counter" ||
+                     e.type === "counterTimer"
+            );
+
+        return `
+            <div class="note-card"
+                 onclick="openNote('${note.id}')">
+
+                <div class="note-card-top">
+
+                    <div class="note-title">
+                        ${escapeHTML(note.title || "Senza titolo")}
+                    </div>
+
+                    <div class="note-date">
+                        ${formatDate(note.updatedAt)}
+                    </div>
+
+                </div>
+
+                ${
+                    note.body
+                    ?
+                    `<div class="note-preview">
+                        ${escapeHTML(note.body.substring(0,120))}
+                    </div>`
+                    : ""
+                }
+
+                <div class="note-stats">
+
+                    ${
+                        checks.length
+                        ?
+                        `<div class="badge">
+                            ☑ ${completed}/${checks.length}
+                        </div>`
+                        : ""
+                    }
+
+                    ${
+                        counters.map(c => {
+
+                            return `
+                            <div class="badge">
+                                ${escapeHTML(c.name)}: ${c.value}
+                            </div>
+                            `;
+
+                        }).join("")
+                    }
+
+                </div>
+
+            </div>
+        `;
+
+    }).join("");
+}
+
+
+/* =========================
+   NUOVA NOTA
+========================= */
+
+function newNote() {
+
+    const note = {
+
+        id: generateId(),
+
+        title: "",
+
+        body: "",
+
+        createdAt: new Date().toISOString(),
+
+        updatedAt: new Date().toISOString(),
+
+        elements: []
+
+    };
+
+    notes.unshift(note);
+
+    saveDatabase();
+
+    openNote(note.id);
+}
+
+
+/* =========================
+   APRI NOTA
+========================= */
+
+function openNote(id) {
+
+    currentNoteId = id;
+
+    const note =
+        notes.find(n => n.id === id);
+
+    if (!note) return;
+
+    document.getElementById("home")
+        .style.display = "none";
+
+    document.getElementById("editor")
+        .classList.add("active");
+
+    document.getElementById("noteTitle")
+        .value = note.title;
+
+    document.getElementById("noteBody")
+        .value = note.body;
+
+    renderElements();
+}
+
+
+/* =========================
+   CHIUDI
+========================= */
+
+function closeEditor() {
+
+    saveCurrentNote();
+
+    document.getElementById("editor")
+        .classList.remove("active");
+
+    document.getElementById("home")
+        .style.display = "block";
+
+    renderNotes();
+}
+
+
+/* =========================
+   SALVA NOTA
+========================= */
+
+function saveCurrentNote() {
+
+    if (!currentNoteId) return;
+
+    const note =
+        notes.find(n => n.id === currentNoteId);
+
+    if (!note) return;
+
+    note.title =
+        document.getElementById("noteTitle").value;
+
+    note.body =
+        document.getElementById("noteBody").value;
+
+    note.updatedAt =
+        new Date().toISOString();
+
+    saveDatabase();
+}
+
+
+/* =========================
+   ELEMENTI
+========================= */
+
+function renderElements() {
+
+    const note =
+        notes.find(n => n.id === currentNoteId);
+
+    if (!note) return;
+
+    const container =
+        document.getElementById("elementsList");
+
+    container.innerHTML =
+        note.elements.map(element => {
+
+            if (element.type === "check") {
+
+                return renderCheck(element);
+
+            }
+
+            if (element.type === "counter") {
+
+                return renderCounter(element);
+
+            }
+
+            if (element.type === "timer") {
+
+                return renderTimer(element);
+
+            }
+
+            if (element.type === "counterTimer") {
+
+                return renderCounterTimer(element);
+
+            }
+
+            return "";
+
+        }).join("");
+}
+
+
+/* =========================
+   CHECKBOX
+========================= */
+
+function renderCheck(element) {
+
+    return `
+
+    <div class="element">
+
+        <div class="element-header">
+
+            <div>
+
+                <div class="element-name">
+                    ${escapeHTML(element.name)}
+                </div>
+
+                <div class="element-type">
+                    Lista spuntabile
+                </div>
+
+            </div>
+
+            <button class="delete-element"
+                    onclick="deleteElement('${element.id}')">
+                Elimina
+            </button>
+
+        </div>
+
+        <div class="check-row">
+
+            <div
+                class="checkbox ${element.completed ? "checked" : ""}"
+                onclick="toggleCheck('${element.id}')">
+
+                ${element.completed ? "✓" : ""}
+
+            </div>
+
+            <div class="check-text ${element.completed ? "done-text" : ""}">
+                ${escapeHTML(element.name)}
+            </div>
+
+        </div>
+
+    </div>
+
+    `;
+}
+
+
+/* =========================
+   CONTATORE
+========================= */
+
+function renderCounter(element) {
+
+    return `
+
+    <div class="element">
+
+        <div class="element-header">
+
+            <div>
+
+                <div class="element-name">
+                    ${escapeHTML(element.name)}
+                </div>
+
+                <div class="element-type">
+                    Contatore giornaliero
+                </div>
+
+            </div>
+
+            <button class="delete-element"
+                    onclick="deleteElement('${element.id}')">
+                Elimina
+            </button>
+
+        </div>
+
+        <div class="counter-box">
+
+            <div class="counter-value">
+                ${getTodayValue(element)}
+            </div>
+
+            <div class="counter-buttons">
+
+                <button onclick="changeCounter('${element.id}', -1)">
+                    −
+                </button>
+
+                <button onclick="changeCounter('${element.id}', 1)">
+                    +
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    `;
+}
+
+
+/* =========================
+   TIMER
+========================= */
+
+function renderTimer(element) {
+
+    return `
+
+    <div class="element">
+
+        <div class="element-header">
+
+            <div>
+
+                <div class="element-name">
+                    ${escapeHTML(element.name)}
+                </div>
+
+                <div class="element-type">
+                    Timer dall'ultima registrazione
+                </div>
+
+            </div>
+
+            <button class="delete-element"
+                    onclick="deleteElement('${element.id}')">
+                Elimina
+            </button>
+
+        </div>
+
+        <div class="timer-box">
+
+            <div
+                class="timer-value"
+                id="timer-${element.id}">
+                ${getElapsed(element.lastTime)}
+            </div>
+
+            <div class="timer-sub">
+                Ultima registrazione:
+                ${element.lastTime
+                    ? new Date(element.lastTime).toLocaleString("it-IT")
+                    : "mai"}
+            </div>
+
+            <button class="timer-action"
+                    onclick="resetTimer('${element.id}')">
+
+                Registra adesso
+
+            </button>
+
+        </div>
+
+    </div>
+
+    `;
+}
+
+
+/* =========================
+   COUNTER + TIMER
+========================= */
+
+function renderCounterTimer(element) {
+
+    return `
+
+    <div class="element">
+
+        <div class="element-header">
+
+            <div>
+
+                <div class="element-name">
+                    ${escapeHTML(element.name)}
+                </div>
+
+                <div class="element-type">
+                    Contatore giornaliero + timer
+                </div>
+
+            </div>
+
+            <button class="delete-element"
+                    onclick="deleteElement('${element.id}')">
+                Elimina
+            </button>
+
+        </div>
+
+        <div class="counter-box">
+
+            <div>
+
+                <div class="counter-value">
+                    ${getTodayValue(element)}
+                </div>
+
+                <div style="color:#8e8e93;font-size:12px;">
+                    oggi
+                </div>
+
+            </div>
+
+            <div class="counter-buttons">
+
+                <button onclick="changeCounterTimer('${element.id}', -1)">
+                    −
+                </button>
+
+                <button onclick="changeCounterTimer('${element.id}', 1)">
+                    +
+                </button>
+
+            </div>
+
+        </div>
+
+        <div class="timer-box">
+
+            <div
+                class="timer-value"
+                id="timer-${element.id}">
+                ${getElapsed(element.lastTime)}
+            </div>
+
+            <div class="timer-sub">
+
+                dall'ultima registrazione
+
+            </div>
+
+        </div>
+
+    </div>
+
+    `;
+}
+
+
+/* =========================
+   CHECK
+========================= */
+
+function toggleCheck(id) {
+
+    const note =
+        notes.find(n => n.id === currentNoteId);
+
+    const element =
+        note.elements.find(e => e.id === id);
+
+    if (!element) return;
+
+    element.completed =
+        !element.completed;
+
+    saveDatabase();
+
+    renderElements();
+}
+
+
+/* =========================
+   CONTATORI
+========================= */
+
+function todayKey() {
+
+    const d = new Date();
+
+    return d.toISOString().split("T")[0];
+
+}
+
+
+function getTodayValue(element) {
+
+    const key = todayKey();
+
+    if (!element.history) {
+
+        element.history = {};
+
+    }
+
+    return element.history[key] || 0;
+
+}
+
+
+function changeCounter(id, amount) {
+
+    const note =
+        notes.find(n => n.id === currentNoteId);
+
+    const element =
+        note.elements.find(e => e.id === id);
+
+    if (!element) return;
+
+    const key = todayKey();
+
+    if (!element.history) {
+        element.history = {};
+    }
+
+    element.history[key] =
+        Math.max(
+            0,
+            (element.history[key] || 0) + amount
+        );
+
+    saveDatabase();
+
+    renderElements();
+}
+
+
+function changeCounterTimer(id, amount) {
+
+    const note =
+        notes.find(n => n.id === currentNoteId);
+
+    const element =
+        note.elements.find(e => e.id === id);
+
+    if (!element) return;
+
+    const key = todayKey();
+
+    if (!element.history) {
+        element.history = {};
+    }
+
+    element.history[key] =
+        Math.max(
+            0,
+            (element.history[key] || 0) + amount
+        );
+
+    if (amount > 0) {
+
+        element.lastTime =
+            new Date().toISOString();
+
+    }
+
+    saveDatabase();
+
+    renderElements();
+}
+
+
+/* =========================
+   TIMER
+========================= */
+
+function resetTimer(id) {
+
+    const note =
+        notes.find(n => n.id === currentNoteId);
+
+    const element =
+        note.elements.find(e => e.id === id);
+
+    if (!element) return;
+
+    element.lastTime =
+        new Date().toISOString();
+
+    saveDatabase();
+
+    renderElements();
+}
+
+
+function getElapsed(time) {
+
+    if (!time) {
+        return "Mai registrato";
+    }
+
+    const diff =
+        Math.max(
+            0,
+            Date.now() - new Date(time).getTime()
+        );
+
+    const seconds =
+        Math.floor(diff / 1000);
+
+    const days =
+        Math.floor(seconds / 86400);
+
+    const hours =
+        Math.floor((seconds % 86400) / 3600);
+
+    const minutes =
+        Math.floor((seconds % 3600) / 60);
+
+    const secs =
+        seconds % 60;
+
+    let result = "";
+
+    if (days > 0)
+        result += days + "g ";
+
+    if (hours > 0)
+        result += hours + "h ";
+
+    if (minutes > 0)
+        result += minutes + "m ";
+
+    result += secs + "s";
+
+    return result;
+}
+
+
+/* =========================
+   AGGIUNGI ELEMENTO
+========================= */
+
+function openElementModal() {
+
+    document
+        .getElementById("elementModal")
+        .classList.add("active");
+
+    document
+        .getElementById("elementName")
+        .value = "";
+
+    setTimeout(() => {
+
+        document
+            .getElementById("elementName")
+            .focus();
+
+    }, 150);
+}
+
+
+function closeElementModal() {
+
+    document
+        .getElementById("elementModal")
+        .classList.remove("active");
+
+}
+
+
+function addElement(type) {
+
+    const name =
+        document
+        .getElementById("elementName")
+        .value
+        .trim();
+
+    if (!name) {
+
+        alert("Inserisci un nome.");
+
+        return;
+
+    }
+
+    const note =
+        notes.find(n => n.id === currentNoteId);
+
+    if (!note) return;
+
+    const element = {
+
+        id: generateId(),
+
+        name: name,
+
+        type: type,
+
+        completed: false,
+
+        value: 0,
+
+        history: {},
+
+        lastTime: null
+
+    };
+
+    note.elements.push(element);
+
+    note.updatedAt =
+        new Date().toISOString();
+
+    saveDatabase();
+
+    closeElementModal();
+
+    renderElements();
+
+}
+
+
+/* =========================
+   DELETE
+========================= */
+
+function deleteElement(id) {
+
+    if (!confirm("Eliminare questo elemento?")) {
+        return;
+    }
+
+    const note =
+        notes.find(n => n.id === currentNoteId);
+
+    note.elements =
+        note.elements.filter(
+            e => e.id !== id
+        );
+
+    saveDatabase();
+
+    renderElements();
+}
+
+
+/* =========================
+   ESCAPE HTML
+========================= */
+
+function escapeHTML(text) {
+
+    return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
+
+/* =========================
+   TIMER LIVE
+========================= */
+
+setInterval(() => {
+
+    if (!currentNoteId) return;
+
+    const note =
+        notes.find(n => n.id === currentNoteId);
+
+    if (!note) return;
+
+    note.elements.forEach(element => {
+
+        if (
+            element.type === "timer" ||
+            element.type === "counterTimer"
+        ) {
+
+            const timer =
+                document.getElementById(
+                    "timer-" + element.id
+                );
+
+            if (timer) {
+
+                timer.textContent =
+                    getElapsed(element.lastTime);
+
+            }
+
+        }
+
+    });
+
+}, 1000);
+
+
+/* =========================
+   START
+========================= */
+
+renderNotes();
+
+</script>
+
+</body>
+</html>
