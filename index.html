@@ -61,6 +61,9 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
 .overview-row{display:flex;align-items:center;gap:10px;padding:9px 7px;margin:3px 0;border-radius:8px;background:#f5f6f8;border-left:3px solid #3978e8;font-size:13px}
 .overview-time{color:#8992a1;white-space:nowrap}
 .overview-name{flex:1;overflow-wrap:anywhere}
+.weekday-options{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.weekday-options label{display:flex;align-items:center;gap:4px;margin:0;padding:7px 9px;background:#f0f2f6;border-radius:8px}
+.weekday-options input{width:16px;height:16px;margin:0}
 .bottom{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;align-items:center;padding:12px 12px calc(12px + env(safe-area-inset-bottom));z-index:8;pointer-events:none}
 .plus{pointer-events:auto;border:0;background:#3978e8;color:white;border-radius:50%;width:58px;height:58px;font-size:32px;box-shadow:0 4px 14px #3978e855}
 .menu{display:none;position:fixed;bottom:85px;left:50%;transform:translateX(-50%);width:min(260px,90%);background:white;border-radius:15px;padding:9px;box-shadow:0 5px 25px #20273525;z-index:9}
@@ -233,32 +236,45 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
         <label>Colore</label>
         <input id="taskColor" type="color" value="#3978e8">
       </div>
-      <div>
-        <label>Ripetizione</label>
+      <div class="full">
+        <label>Tipo di attività</label>
+        <select id="taskMode" onchange="toggleTaskMode()">
+          <option value="once">Singola</option>
+          <option value="carry">Ripeti se non completata</option>
+          <option value="routine">Routine</option>
+        </select>
+      </div>
+      <div id="taskRoutineBox" class="full" style="display:none">
+        <label>Frequenza della routine</label>
         <select id="taskFreq" onchange="toggleCustom('task')">
-          <option value="once">Solo questo giorno</option>
           <option value="daily">Tutti i giorni</option>
-          <option value="every">Ogni tot giorni</option>
+          <option value="weekdays">Giorni della settimana</option>
           <option value="weekly">Ogni settimana</option>
+          <option value="every">Ogni tot giorni</option>
           <option value="monthly">Ogni mese</option>
         </select>
-      </div>
-      <div id="taskEveryBox" style="display:none">
-        <label>Ogni quanti giorni</label>
-        <input id="taskEvery" type="number" min="1" value="2">
+        <div id="taskEveryBox" style="display:none">
+          <label>Ogni quanti giorni</label>
+          <input id="taskEvery" type="number" min="1" value="2">
+        </div>
+        <div id="taskWeekdaysBox" style="display:none">
+          <label>Giorni in cui ripetere</label>
+          <div class="weekday-options">
+            <label><input type="checkbox" name="taskDay" value="1"> Lun</label>
+            <label><input type="checkbox" name="taskDay" value="2"> Mar</label>
+            <label><input type="checkbox" name="taskDay" value="3"> Mer</label>
+            <label><input type="checkbox" name="taskDay" value="4"> Gio</label>
+            <label><input type="checkbox" name="taskDay" value="5"> Ven</label>
+            <label><input type="checkbox" name="taskDay" value="6"> Sab</label>
+            <label><input type="checkbox" name="taskDay" value="0"> Dom</label>
+          </div>
+        </div>
       </div>
       <div class="full">
-        <label>Se non viene completata</label>
-        <select id="taskCarry">
-          <option value="reset">Non riproporla</option>
-          <option value="carry">Ricordamela nei giorni successivi</option>
-        </select>
-      </div>
-      <div>
         <label>Inizio</label>
         <input id="taskStart" type="date">
       </div>
-      <div>
+      <div class="full">
         <label>Fine (facoltativa)</label>
         <input id="taskEnd" type="date">
       </div>
@@ -343,7 +359,7 @@ let data={
 };
 let selected=today(),cycleDraft=[],sectionDraft=[],sectionEditItems=null;
 let editingTaskId=null,editingSectionId=null;
-let calendarMonth=parseDate(selected);
+let calendarMonth=parseDate(selected),overviewExpanded=false;
 
 function persist(){
   for(let k in data)write(k,data[k]);
@@ -438,6 +454,7 @@ function occurs(obj,day){
   if(obj.freq==='daily')return true;
   if(obj.freq==='every')return diff%Math.max(1,Number(obj.every)||1)===0;
   if(obj.freq==='weekly')return diff%7===0;
+  if(obj.freq==='weekdays')return (obj.days||[]).includes(parseDate(day).getDay());
   if(obj.freq==='monthly'){
     let a=parseDate(obj.start),b=parseDate(day);
     return a.getDate()===b.getDate();
@@ -527,34 +544,48 @@ function render(){
 }
 function renderActivityOverview(){
   let current=today(),tomorrow=addDays(current,1);
-  let todayTasks=data.tasks.filter(t=>occursTask(t,current));
-  let tomorrowTasks=data.tasks.filter(t=>
-    (t.freq==='once'&&occurs(t,tomorrow))||hasCarryReminder(t,tomorrow)
-  );
+  let groups=[
+    {name:'OGGI',day:current,tasks:data.tasks.filter(t=>occursTask(t,current))},
+    {name:'DOMANI',day:tomorrow,tasks:data.tasks.filter(t=>
+      (t.freq==='once'&&occurs(t,tomorrow))||hasCarryReminder(t,tomorrow)
+    )}
+  ];
   let futureTasks=data.tasks.filter(t=>t.freq==='once'&&t.start>tomorrow)
     .sort((a,b)=>a.start.localeCompare(b.start)||(a.time||'').localeCompare(b.time||''));
+  let dates=[...new Set(futureTasks.map(t=>t.start))];
+  dates.forEach(day=>groups.push({
+    name:dateLabel(day),day,
+    tasks:futureTasks.filter(t=>t.start===day)
+  }));
+  let total=groups.reduce((sum,g)=>sum+g.tasks.length,0);
+  let remaining=overviewExpanded?total:20;
   let html='';
-  function rows(tasks){
-    return tasks.sort((a,b)=>(a.time||'').localeCompare(b.time||'')).map(t=>`
+  groups.forEach(g=>{
+    let tasks=[...g.tasks].sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+    if(!tasks.length){
+      if(g.day===current)html+=`<div class="overview-day">${g.name}</div><div class="empty">Nessuna attività prevista.</div>`;
+      if(g.day===tomorrow)html+=`<div class="overview-day">${g.name}</div><div class="empty">Nessun impegno previsto.</div>`;
+      return;
+    }
+    if(remaining<=0)return;
+    html+=`<div class="overview-day">${g.name}</div>`;
+    let visible=tasks.slice(0,remaining);
+    html+=visible.map(t=>`
       <div class="overview-row" style="border-left-color:${t.color||'#3978e8'}">
         <span class="overview-time">${t.time||'Senza orario'}${t.timeEnd?'–'+t.timeEnd:''}</span>
         <span class="overview-name">${safe(t.name)}</span>
       </div>
     `).join('');
-  }
-  html+=`<div class="overview-day">OGGI</div>`;
-  html+=todayTasks.length?rows([...todayTasks]):'<div class="empty">Nessuna attività prevista.</div>';
-  html+=`<div class="overview-day">DOMANI</div>`;
-  html+=tomorrowTasks.length?rows([...tomorrowTasks]):'<div class="empty">Nessun impegno previsto.</div>';
-  if(futureTasks.length){
-    html+=`<div class="overview-day">ALTRI GIORNI</div>`;
-    let dates=[...new Set(futureTasks.map(t=>t.start))];
-    dates.forEach(day=>{
-      html+=`<div class="muted" style="padding:9px 0 4px">${dateLabel(day)}</div>`;
-      html+=rows(futureTasks.filter(t=>t.start===day));
-    });
+    remaining-=visible.length;
+  });
+  if(total>20){
+    html+=`<button class="secondary" style="width:100%;margin-top:10px" onclick="toggleOverview()">${overviewExpanded?'Mostra meno':'Mostra altro'}</button>`;
   }
   $('activityOverviewList').innerHTML=html;
+}
+function toggleOverview(){
+  overviewExpanded=!overviewExpanded;
+  renderActivityOverview();
 }
 function renderTimeline(){
   let shift=shiftFor(selected);
@@ -639,19 +670,31 @@ function renderSections(){
     </div>`;
   }).join(''):'<div class="empty">Nessuna lista per questo giorno.</div>';
 }
+function toggleTaskMode(){
+  $('taskRoutineBox').style.display=$('taskMode').value==='routine'?'block':'none';
+  toggleCustom('task');
+}
 function openTaskForm(){
   editingTaskId=null;
   showForm('taskForm');
   $('taskForm').querySelector('h2').textContent='Nuova attività';
   $('taskName').value='';$('taskTime').value='';
   $('taskTimeEnd').value='';$('taskColor').value='#3978e8';
-  $('taskFreq').value='once';$('taskEveryBox').style.display='none';
-  $('taskCarry').value='reset';
+  $('taskMode').value='once';$('taskFreq').value='daily';
+  $('taskEveryBox').style.display='none';
+  $('taskWeekdaysBox').style.display='none';
+  document.querySelectorAll('input[name="taskDay"]').forEach(x=>x.checked=false);
   $('taskStart').value=selected;$('taskEnd').value='';
+  toggleTaskMode();
   $('taskName').focus();
 }
 function toggleCustom(type){
-  $(type+'EveryBox').style.display=$(type+'Freq').value==='every'?'block':'none';
+  if(type==='task'){
+    $('taskEveryBox').style.display=$('taskFreq').value==='every'?'block':'none';
+    $('taskWeekdaysBox').style.display=$('taskFreq').value==='weekdays'?'block':'none';
+  }else{
+    $(type+'EveryBox').style.display=$(type+'Freq').value==='every'?'block':'none';
+  }
 }
 function saveTask(){
   let name=$('taskName').value.trim();
@@ -661,9 +704,13 @@ function saveTask(){
   if(time&&timeEnd&&timeEnd<=time)return alert('L’ora di fine deve essere successiva all’ora di inizio.');
   let start=$('taskStart').value||selected,end=$('taskEnd').value;
   if(end&&end<start)return alert('La data finale precede quella iniziale.');
+  let mode=$('taskMode').value;
+  let freq=mode==='routine'?$('taskFreq').value:'once';
+  let days=[...document.querySelectorAll('input[name="taskDay"]:checked')].map(x=>Number(x.value));
+  if(mode==='routine'&&freq==='weekdays'&&!days.length)return alert('Seleziona almeno un giorno della settimana.');
   let task={name,time,timeEnd,color:$('taskColor').value,
-    freq:$('taskFreq').value,every:Number($('taskEvery').value)||2,start,end,
-    carryOver:$('taskCarry').value==='carry'};
+    mode,freq,every:Number($('taskEvery').value)||2,days,start,end,
+    carryOver:mode==='carry'};
   if(editingTaskId){
     Object.assign(data.tasks.find(t=>t.id===editingTaskId),task);
     editingTaskId=null;closeForms();render();
@@ -787,11 +834,13 @@ function closeActivityManager(){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function repeatLabel(obj){
-  if(obj.freq==='once')return 'Solo questo giorno';
-  if(obj.freq==='daily')return 'Tutti i giorni';
-  if(obj.freq==='every')return 'Ogni '+(Number(obj.every)||2)+' giorni';
-  if(obj.freq==='weekly')return 'Ogni settimana';
-  if(obj.freq==='monthly')return 'Ogni mese';
+  if(obj.mode==='carry'||(obj.mode===undefined&&obj.freq==='once'&&obj.carryOver===true))return 'Ripeti se non completata';
+  if(obj.mode==='once'||(obj.mode===undefined&&obj.freq==='once'))return 'Singola';
+  if(obj.freq==='daily')return 'Routine · Tutti i giorni';
+  if(obj.freq==='weekdays')return 'Routine · '+(obj.days||[]).map(d=>['Dom','Lun','Mar','Mer','Gio','Ven','Sab'][d]).join(', ');
+  if(obj.freq==='every')return 'Routine · Ogni '+(Number(obj.every)||2)+' giorni';
+  if(obj.freq==='weekly')return 'Routine · Ogni settimana';
+  if(obj.freq==='monthly')return 'Routine · Ogni mese';
   return '';
 }
 function renderActivityManager(){
@@ -802,7 +851,7 @@ function renderActivityManager(){
   $('activityManagerList').innerHTML=list.length?list.map(x=>`
     <div class="manager-row">
       <strong>${safe(x.name)}</strong>
-      <div class="manager-info">${x.type==='task'?'Attività':'Lista'} · ${dateLabel(x.start)}${x.time?' · '+x.time:''}${x.timeEnd?'–'+x.timeEnd:''}${x.end?' · Fino al '+dateLabel(x.end):''}<br>${repeatLabel(x)}</div>
+      <div class="manager-info">${x.type==='task'?'Attività':'Lista'} · ${dateLabel(x.start)}${x.time?' · '+x.time:''}${x.timeEnd?'–'+x.timeEnd:''}${x.end?' · Fino al '+dateLabel(x.end):''}<br>${x.type==='task'?repeatLabel(x):repeatLabel(x)}</div>
       <button class="secondary" onclick="${x.type==='task'?'editTask':'editSection'}('${x.id}')">Modifica</button>
     </div>`).join(''):'<div class="empty">Non ci sono liste o attività.</div>';
 }
@@ -813,10 +862,18 @@ function editTask(id){
   $('taskForm').querySelector('h2').textContent='Modifica attività';
   $('taskName').value=t.name;$('taskTime').value=t.time||'';
   $('taskTimeEnd').value=t.timeEnd||'';$('taskColor').value=t.color||'#3978e8';
-  $('taskFreq').value=t.freq;$('taskEvery').value=t.every||2;
-  $('taskEveryBox').style.display=t.freq==='every'?'block':'none';
-  $('taskCarry').value=t.carryOver===true?'carry':'reset';
+  let mode=t.mode||(t.freq==='once'?(t.carryOver===true?'carry':'once'):'routine');
+  $('taskMode').value=mode;
+  $('taskFreq').value=t.freq==='weekdays'?'weekdays':(t.freq==='once'?'daily':t.freq);
+  $('taskEvery').value=t.every||2;
+  document.querySelectorAll('input[name="taskDay"]').forEach(x=>x.checked=(t.days||[]).includes(Number(x.value)));
+  if(t.freq==='daily'&&!t.days)document.querySelectorAll('input[name="taskDay"]').forEach(x=>x.checked=true);
+  if(t.freq==='weekly'&&!t.days){
+    let weekday=parseDate(t.start).getDay();
+    document.querySelectorAll('input[name="taskDay"]').forEach(x=>x.checked=Number(x.value)===weekday);
+  }
   $('taskStart').value=t.start;$('taskEnd').value=t.end||'';
+  toggleTaskMode();
 }
 function editSection(id){
   let s=data.sections.find(s=>s.id===id);
