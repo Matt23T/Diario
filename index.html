@@ -56,6 +56,11 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
 .secondary{border:0;background:#f0f2f6;color:#30394a;padding:10px;border-radius:9px}
 .cancel{border:0;background:transparent;color:#737d8c;padding:10px;margin-top:4px;width:100%}
 .empty{font-size:13px;color:#8992a1;padding:8px 0}
+.overview-day{font-size:13px;font-weight:700;color:#626d7e;padding:12px 0 6px;border-top:1px solid #edf0f4}
+.overview-day:first-child{border-top:0;padding-top:0}
+.overview-row{display:flex;align-items:center;gap:10px;padding:9px 7px;margin:3px 0;border-radius:8px;background:#f5f6f8;border-left:3px solid #3978e8;font-size:13px}
+.overview-time{color:#8992a1;white-space:nowrap}
+.overview-name{flex:1;overflow-wrap:anywhere}
 .bottom{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;align-items:center;padding:12px 12px calc(12px + env(safe-area-inset-bottom));z-index:8;pointer-events:none}
 .plus{pointer-events:auto;border:0;background:#3978e8;color:white;border-radius:50%;width:58px;height:58px;font-size:32px;box-shadow:0 4px 14px #3978e855}
 .menu{display:none;position:fixed;bottom:85px;left:50%;transform:translateX(-50%);width:min(260px,90%);background:white;border-radius:15px;padding:9px;box-shadow:0 5px 25px #20273525;z-index:9}
@@ -137,6 +142,13 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
 <main>
   <section class="card">
     <div class="card-head">
+      <h2>LISTE</h2>
+    </div>
+    <div id="sections"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
       <span class="muted" id="shiftSummary"></span>
     </div>
     <div id="timeline"></div>
@@ -144,9 +156,9 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
 
   <section class="card">
     <div class="card-head">
-      <h2>LISTE</h2>
+      <h2>ATTIVITÀ</h2>
     </div>
-    <div id="sections"></div>
+    <div id="activityOverviewList"></div>
   </section>
 
   <section class="card" id="shiftManagement" style="display:none">
@@ -443,6 +455,16 @@ function occursTask(t,day){
   }
   return false;
 }
+function hasCarryReminder(t,day){
+  if(t.carryOver!==true||day<=t.start)return false;
+  let d=addDays(day,-1);
+  while(d>=t.start){
+    if(isChecked(t.id,d))return false;
+    if(occurs(t,d))return true;
+    d=addDays(d,-1);
+  }
+  return false;
+}
 function carriesOver(s){
   return s.carryOver===undefined||s.carryOver===true;
 }
@@ -500,7 +522,39 @@ function render(){
   $('dateTitle').innerHTML=safe(dateLabel(selected)).replace(', ','<small>')+'</small>';
   renderTimeline();
   renderSections();
+  renderActivityOverview();
   if($('activityManager').style.display==='block')renderActivityManager();
+}
+function renderActivityOverview(){
+  let current=today(),tomorrow=addDays(current,1);
+  let todayTasks=data.tasks.filter(t=>occursTask(t,current));
+  let tomorrowTasks=data.tasks.filter(t=>
+    (t.freq==='once'&&occurs(t,tomorrow))||hasCarryReminder(t,tomorrow)
+  );
+  let futureTasks=data.tasks.filter(t=>t.freq==='once'&&t.start>tomorrow)
+    .sort((a,b)=>a.start.localeCompare(b.start)||(a.time||'').localeCompare(b.time||''));
+  let html='';
+  function rows(tasks){
+    return tasks.sort((a,b)=>(a.time||'').localeCompare(b.time||'')).map(t=>`
+      <div class="overview-row" style="border-left-color:${t.color||'#3978e8'}">
+        <span class="overview-time">${t.time||'Senza orario'}${t.timeEnd?'–'+t.timeEnd:''}</span>
+        <span class="overview-name">${safe(t.name)}</span>
+      </div>
+    `).join('');
+  }
+  html+=`<div class="overview-day">OGGI</div>`;
+  html+=todayTasks.length?rows([...todayTasks]):'<div class="empty">Nessuna attività prevista.</div>';
+  html+=`<div class="overview-day">DOMANI</div>`;
+  html+=tomorrowTasks.length?rows([...tomorrowTasks]):'<div class="empty">Nessun impegno previsto.</div>';
+  if(futureTasks.length){
+    html+=`<div class="overview-day">ALTRI GIORNI</div>`;
+    let dates=[...new Set(futureTasks.map(t=>t.start))];
+    dates.forEach(day=>{
+      html+=`<div class="muted" style="padding:9px 0 4px">${dateLabel(day)}</div>`;
+      html+=rows(futureTasks.filter(t=>t.start===day));
+    });
+  }
+  $('activityOverviewList').innerHTML=html;
 }
 function renderTimeline(){
   let shift=shiftFor(selected);
