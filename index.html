@@ -87,7 +87,10 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
 .calendar-day.today{font-weight:700}
 .calendar-day strong{font-size:13px;line-height:15px}
 .calendar-day small{font-size:10px;font-weight:700;line-height:11px}
-.settings-option{width:100%;text-align:left;border:0;background:#f5f6f8;border-radius:10px;padding:14px;color:#202735}
+.settings-option{width:100%;text-align:left;border:0;background:#f5f6f8;border-radius:10px;padding:14px;color:#202735;margin-bottom:8px}
+.manager-row{padding:12px 0;border-bottom:1px solid #edf0f4}
+.manager-info{font-size:12px;color:#8992a1;margin:5px 0 9px}
+.manager-row button{padding:7px 13px}
 @media(max-width:390px){.grid{grid-template-columns:1fr}.full{grid-column:auto}}
 </style>
 </head>
@@ -127,6 +130,7 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
       <button class="close-btn" onclick="closeSettings()">×</button>
     </div>
     <button class="settings-option" onclick="openShiftManagement()">◷ Gestione turni</button>
+    <button class="settings-option" onclick="openActivityManager()">✎ Modifica liste / attività</button>
   </div>
 </div>
 
@@ -192,6 +196,14 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
     </div>
   </section>
 
+  <section class="card" id="activityManager" style="display:none">
+    <div class="card-head">
+      <h2>Modifica liste / attività</h2>
+      <button class="secondary" onclick="closeActivityManager()">Chiudi</button>
+    </div>
+    <div id="activityManagerList"></div>
+  </section>
+
   <section class="card" id="taskForm" style="display:none">
     <div class="card-head"><h2>Nuova attività</h2></div>
     <label>Nome dell'attività</label>
@@ -233,7 +245,7 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
       </div>
     </div>
     <button class="primary" onclick="saveTask()">Salva attività</button>
-    <button class="cancel" onclick="closeForms()">Annulla</button>
+    <button class="cancel" onclick="cancelEdit()">Annulla</button>
   </section>
 
   <section class="card" id="sectionForm" style="display:none">
@@ -278,7 +290,7 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
       </div>
     </div>
     <button class="primary" onclick="saveSection()">Salva lista</button>
-    <button class="cancel" onclick="closeForms()">Annulla</button>
+    <button class="cancel" onclick="cancelEdit()">Annulla</button>
   </section>
 </main>
 
@@ -310,7 +322,8 @@ let data={
   items:read('items',{}),
   activityChecks:read('activityChecks',{})
 };
-let selected=today(),cycleDraft=[],sectionDraft=[];
+let selected=today(),cycleDraft=[],sectionDraft=[],sectionEditItems=null;
+let editingTaskId=null,editingSectionId=null;
 let calendarMonth=parseDate(selected);
 
 function persist(){
@@ -373,6 +386,8 @@ function selectCalendarDate(date){
   render();
 }
 function openSettings(){
+  $('shiftManagement').style.display='none';
+  $('activityManager').style.display='none';
   $('settingsOverlay').classList.add('show');
 }
 function closeSettings(event){
@@ -467,6 +482,7 @@ function render(){
   $('dateTitle').innerHTML=safe(dateLabel(selected)).replace(', ','<small>')+'</small>';
   renderTimeline();
   renderSections();
+  if($('activityManager').style.display==='block')renderActivityManager();
 }
 function renderTimeline(){
   let shift=shiftFor(selected);
@@ -552,7 +568,9 @@ function renderSections(){
   }).join(''):'<div class="empty">Nessuna lista per questo giorno.</div>';
 }
 function openTaskForm(){
+  editingTaskId=null;
   showForm('taskForm');
+  $('taskForm').querySelector('h2').textContent='Nuova attività';
   $('taskName').value='';$('taskTime').value='';
   $('taskTimeEnd').value='';$('taskColor').value='#3978e8';
   $('taskFreq').value='once';$('taskEveryBox').style.display='none';
@@ -570,9 +588,16 @@ function saveTask(){
   if(time&&timeEnd&&timeEnd<=time)return alert('L’ora di fine deve essere successiva all’ora di inizio.');
   let start=$('taskStart').value||selected,end=$('taskEnd').value;
   if(end&&end<start)return alert('La data finale precede quella iniziale.');
-  data.tasks.push({id:uid(),name,time,timeEnd,color:$('taskColor').value,
-    freq:$('taskFreq').value,every:Number($('taskEvery').value)||2,start,end});
-  persist();closeForms();render();
+  let task={name,time,timeEnd,color:$('taskColor').value,
+    freq:$('taskFreq').value,every:Number($('taskEvery').value)||2,start,end};
+  if(editingTaskId){
+    Object.assign(data.tasks.find(t=>t.id===editingTaskId),task);
+    editingTaskId=null;closeForms();render();
+    $('activityManager').style.display='block';renderActivityManager();
+  }else{
+    data.tasks.push({id:uid(),...task});
+    persist();closeForms();render();
+  }
 }
 function deleteTask(id){
   if(!confirm('Eliminare questa attività e la sua ricorrenza?'))return;
@@ -580,7 +605,9 @@ function deleteTask(id){
   persist();render();
 }
 function openSectionForm(){
+  editingSectionId=null;sectionEditItems=null;
   showForm('sectionForm');
+  $('sectionForm').querySelector('h2').textContent='Nuova lista';
   $('sectionName').value='';$('sectionTime').value='';$('sectionFreq').value='once';
   $('sectionCarry').value='reset';
   $('sectionEveryBox').style.display='none';
@@ -591,25 +618,40 @@ function openSectionForm(){
 function addSectionDraftItem(){
   let input=$('sectionItemInput'),text=input.value.trim();
   if(!text)return;
-  sectionDraft.push(text);input.value='';renderSectionDraft();input.focus();
+  if(editingSectionId)sectionEditItems.push({id:uid(),text,done:false});
+  else sectionDraft.push(text);
+  input.value='';renderSectionDraft();input.focus();
 }
 function renderSectionDraft(){
-  $('sectionItemList').innerHTML=sectionDraft.map((x,i)=>`
-    <div class="item"><span>${safe(x)}</span>
+  let items=editingSectionId?sectionEditItems:sectionDraft;
+  $('sectionItemList').innerHTML=items.map((x,i)=>`
+    <div class="item"><span>${safe(editingSectionId?x.text:x)}</span>
     <button class="icon-btn" onclick="removeSectionDraftItem(${i})">×</button></div>`).join('');
 }
-function removeSectionDraftItem(i){sectionDraft.splice(i,1);renderSectionDraft()}
+function removeSectionDraftItem(i){
+  if(editingSectionId)sectionEditItems.splice(i,1);
+  else sectionDraft.splice(i,1);
+  renderSectionDraft();
+}
 function saveSection(){
   let name=$('sectionName').value.trim();
   if(!name)return alert('Inserisci il nome della lista.');
   let start=$('sectionStart').value||selected,end=$('sectionEnd').value;
   if(end&&end<start)return alert('La data finale precede quella iniziale.');
-  let id=uid();
-  data.sections.push({id,name,time:$('sectionTime').value,
+  let section={name,time:$('sectionTime').value,
     freq:$('sectionFreq').value,every:Number($('sectionEvery').value)||2,start,end,
-    carryOver:$('sectionCarry').value==='carry'});
-  data.items[id]=sectionDraft.map(text=>({id:uid(),text,done:false}));
-  persist();closeForms();render();
+    carryOver:$('sectionCarry').value==='carry'};
+  if(editingSectionId){
+    Object.assign(data.sections.find(s=>s.id===editingSectionId),section);
+    data.items[editingSectionId]=sectionEditItems;
+    editingSectionId=null;sectionEditItems=null;closeForms();persist();render();
+    $('activityManager').style.display='block';renderActivityManager();
+  }else{
+    let id=uid();
+    data.sections.push({id,...section});
+    data.items[id]=sectionDraft.map(text=>({id:uid(),text,done:false}));
+    persist();closeForms();render();
+  }
 }
 function toggleSection(id){
   let el=$('items_'+id);
@@ -649,9 +691,76 @@ function deleteSection(id){
 function openShiftManagement(){
   $('settingsOverlay').classList.remove('show');
   closeForms();
+  $('activityManager').style.display='none';
   $('shiftManagement').style.display='block';
   $('shiftManagement').scrollIntoView({behavior:'smooth',block:'start'});
   renderShifts();
+}
+function openActivityManager(){
+  $('settingsOverlay').classList.remove('show');
+  closeForms();
+  $('shiftManagement').style.display='none';
+  $('activityManager').style.display='block';
+  renderActivityManager();
+  $('activityManager').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function closeActivityManager(){
+  $('activityManager').style.display='none';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function repeatLabel(obj){
+  if(obj.freq==='once')return 'Solo questo giorno';
+  if(obj.freq==='daily')return 'Tutti i giorni';
+  if(obj.freq==='every')return 'Ogni '+(Number(obj.every)||2)+' giorni';
+  if(obj.freq==='weekly')return 'Ogni settimana';
+  if(obj.freq==='monthly')return 'Ogni mese';
+  return '';
+}
+function renderActivityManager(){
+  let list=[
+    ...data.tasks.map(x=>({...x,type:'task'})),
+    ...data.sections.map(x=>({...x,type:'section'}))
+  ].sort((a,b)=>(a.start||'').localeCompare(b.start||'')||(a.time||'').localeCompare(b.time||''));
+  $('activityManagerList').innerHTML=list.length?list.map(x=>`
+    <div class="manager-row">
+      <strong>${safe(x.name)}</strong>
+      <div class="manager-info">${x.type==='task'?'Attività':'Lista'} · ${dateLabel(x.start)}${x.time?' · '+x.time:''}${x.timeEnd?'–'+x.timeEnd:''}${x.end?' · Fino al '+dateLabel(x.end):''}<br>${repeatLabel(x)}</div>
+      <button class="secondary" onclick="${x.type==='task'?'editTask':'editSection'}('${x.id}')">Modifica</button>
+    </div>`).join(''):'<div class="empty">Non ci sono liste o attività.</div>';
+}
+function editTask(id){
+  let t=data.tasks.find(t=>t.id===id);
+  if(!t)return;
+  showForm('taskForm');editingTaskId=id;
+  $('taskForm').querySelector('h2').textContent='Modifica attività';
+  $('taskName').value=t.name;$('taskTime').value=t.time||'';
+  $('taskTimeEnd').value=t.timeEnd||'';$('taskColor').value=t.color||'#3978e8';
+  $('taskFreq').value=t.freq;$('taskEvery').value=t.every||2;
+  $('taskEveryBox').style.display=t.freq==='every'?'block':'none';
+  $('taskStart').value=t.start;$('taskEnd').value=t.end||'';
+}
+function editSection(id){
+  let s=data.sections.find(s=>s.id===id);
+  if(!s)return;
+  showForm('sectionForm');editingSectionId=id;
+  $('sectionForm').querySelector('h2').textContent='Modifica lista';
+  $('sectionName').value=s.name;$('sectionTime').value=s.time||'';
+  $('sectionFreq').value=s.freq;$('sectionEvery').value=s.every||2;
+  $('sectionEveryBox').style.display=s.freq==='every'?'block':'none';
+  $('sectionCarry').value=carriesOver(s)?'carry':'reset';
+  $('sectionStart').value=s.start;$('sectionEnd').value=s.end||'';
+  sectionEditItems=(data.items[id]||[]).map(i=>({...i}));
+  renderSectionDraft();
+}
+function cancelEdit(){
+  let editing=editingTaskId||editingSectionId;
+  editingTaskId=null;editingSectionId=null;sectionEditItems=null;
+  closeForms();
+  if(editing){
+    $('activityManager').style.display='block';
+    renderActivityManager();
+    $('activityManager').scrollIntoView({behavior:'smooth',block:'start'});
+  }
 }
 function openShiftForm(){
   $('shiftForm').style.display='block';
@@ -720,6 +829,8 @@ function saveCycle(){
   if(!repeats||repeats<1)return alert('Inserisci un numero valido di ripetizioni.');
   data.cycle={start,days:[...cycleDraft],repeats};
   persist();renderShifts();render();alert('Rotazione salvata.');
+  $('shiftManagement').style.display='none';
+  window.scrollTo({top:0,behavior:'smooth'});
   if($('calendarOverlay').classList.contains('show'))renderCalendar();
 }
 function clearCycle(){
