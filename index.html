@@ -358,8 +358,9 @@ function renderCalendar(){
     }
     let date=dateStr(monthDate);
     let shift=shiftFor(date);
-    let initial=shift?safe(shift.name.trim().charAt(0).toUpperCase()):'';
-    let style=shift?`style="background:${shift.color}25;color:${shift.color}"`:'';
+    let isRest=shift&&shift.name.trim().toLowerCase()==='riposo';
+    let initial=shift?safe(isRest?'R':shift.name.trim().charAt(0).toUpperCase()):'';
+    let style=shift&&!isRest?`style="background:${shift.color}25;color:${shift.color}"`:'';
     html+=`<button class="calendar-day ${other?'other':''} ${date===selected?'selected':''} ${date===today()?'today':''}" ${style} onclick="selectCalendarDate('${date}')">
       <strong>${day}</strong>${shift?`<small>${initial}</small>`:''}
     </button>`;
