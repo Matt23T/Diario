@@ -10,44 +10,38 @@
 body{margin:0;background:#f5f6f8;color:#202735;font:15px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 button,input,select{font:inherit}
 button{cursor:pointer}
-header{background:white;padding:18px 16px 12px;position:sticky;top:0;z-index:5;border-bottom:1px solid #e8eaf0}
-.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+header{background:white;padding:18px 16px 14px;position:sticky;top:0;z-index:5;border-bottom:1px solid #e8eaf0}
+.top{display:flex;justify-content:space-between;align-items:center}
 h1{font-size:22px;margin:0}
-.date-nav{display:flex;align-items:center;justify-content:space-between;margin-top:18px;gap:8px}
-.date-nav button,.secondary{border:0;background:#f0f2f6;border-radius:10px;padding:10px 13px;color:#30394a}
-#dateTitle{text-align:center;font-weight:700}
-#dateTitle small{display:block;font-weight:400;color:#7b8494;margin-top:4px}
-main{max-width:680px;margin:auto;padding:14px 12px 100px}
+.date-nav{display:flex;align-items:center;justify-content:space-between;margin-top:18px}
+.date-nav button{border:0;background:#f0f2f6;border-radius:10px;padding:9px 14px;color:#30394a}
+#dateTitle{font-weight:700;text-align:center;cursor:pointer}
+#dateTitle small{display:block;font-weight:400;color:#8992a1;margin-top:4px}
+#datePicker{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+main{max-width:680px;margin:auto;padding:14px 12px 110px}
 .card{background:white;border-radius:15px;padding:15px;margin-bottom:13px;box-shadow:0 2px 8px #20273506}
 .card-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}
 h2{font-size:16px;margin:0}
-.add{border:0;background:#e9efff;color:#285bc5;padding:8px 11px;border-radius:9px;font-weight:600}
 .muted{color:#8992a1;font-size:13px}
-.timeline{position:relative}
-.hour{height:52px;position:relative;border-top:1px solid #e9ecf1;padding-left:51px}
+.hour{min-height:55px;position:relative;border-top:1px solid #e9ecf1;padding:5px 4px 5px 51px}
 .hour-label{position:absolute;left:0;top:-8px;font-size:11px;color:#8992a1;background:white;padding-right:7px}
-.shift-bg{position:absolute;left:51px;right:0;height:51px;opacity:.20;border-left:4px solid}
-.shift-label{position:absolute;left:59px;top:4px;font-size:11px;font-weight:700;opacity:.9}
-.task-on-hour{position:absolute;left:58px;right:4px;top:19px;z-index:2}
-.task{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #f0f1f4}
-.task:last-child{border-bottom:0}
-.task input[type=checkbox],.item input{width:18px;height:18px;margin:2px 0 0;accent-color:#3978e8;flex-shrink:0}
-.task-text{flex:1;min-width:0}
-.task-name{overflow-wrap:anywhere}
-.done .task-name{text-decoration:line-through;color:#9ba2ad}
-.task-time{font-size:12px;color:#8992a1;margin-top:3px}
+.shift-bg{position:absolute;left:51px;right:0;top:0;bottom:0;opacity:.20;border-left:4px solid}
+.shift-label{position:absolute;left:58px;top:3px;font-size:10px;font-weight:700;opacity:.9}
+.hour-tasks{position:relative;z-index:2;margin-top:7px}
+.task{display:flex;align-items:center;gap:8px;padding:6px 7px;margin:3px 0;border-radius:8px;background:#f0f2f6;font-size:13px}
+.task input{width:17px;height:17px;margin:0;accent-color:#3978e8;flex-shrink:0}
+.task-name{flex:1;overflow-wrap:anywhere}
+.task.done .task-name{text-decoration:line-through;opacity:.55}
 .icon-btn{border:0;background:transparent;color:#8992a1;padding:2px 5px;font-size:18px}
 .section-row{display:flex;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid #f0f1f4}
-.section-row:last-child{border-bottom:0}
-.section-open{flex:1;text-align:left;border:0;background:transparent;color:#202735;padding:0;min-width:0}
+.section-open{flex:1;text-align:left;border:0;background:transparent;color:#202735;padding:0}
 .section-name{font-weight:600}
 .section-info{font-size:12px;color:#8992a1;margin-top:4px}
-.items{padding:2px 0 8px 12px}
-.item{display:flex;align-items:flex-start;gap:9px;padding:8px 0}
+.items{padding:5px 0 10px 12px}
+.item{display:flex;align-items:center;gap:9px;padding:8px 0}
+.item input{width:18px;height:18px;accent-color:#3978e8}
 .item span{flex:1;overflow-wrap:anywhere}
 .item.checked span{text-decoration:line-through;color:#9ba2ad}
-.item-add{display:flex;gap:7px;margin-top:8px}
-.item-add input{flex:1;min-width:0}
 input,select{border:1px solid #dfe3ea;border-radius:9px;padding:11px;background:white;color:#202735;width:100%;min-width:0}
 label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
 .form{display:none;border-top:1px solid #edf0f4;padding-top:12px;margin-top:12px}
@@ -55,21 +49,24 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
 .full{grid-column:1/-1}
 .primary{border:0;background:#3978e8;color:white;padding:12px 15px;border-radius:10px;font-weight:600;width:100%;margin-top:14px}
+.secondary{border:0;background:#f0f2f6;color:#30394a;padding:10px;border-radius:9px}
 .cancel{border:0;background:transparent;color:#737d8c;padding:10px;margin-top:4px;width:100%}
 .empty{font-size:13px;color:#8992a1;padding:8px 0}
-.bottom{position:fixed;bottom:0;left:0;right:0;background:#ffffffed;border-top:1px solid #e8eaf0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));display:flex;justify-content:center;gap:8px;z-index:6}
-.bottom button{flex:1;max-width:220px;border:0;background:#f0f2f6;border-radius:10px;padding:11px 5px;color:#30394a}
-.bottom button.active{background:#3978e8;color:white}
-.page{display:none}
-.page.active{display:block}
+.bottom{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;align-items:center;padding:12px 12px calc(12px + env(safe-area-inset-bottom));z-index:8;pointer-events:none}
+.plus{pointer-events:auto;border:0;background:#3978e8;color:white;border-radius:50%;width:58px;height:58px;font-size:32px;box-shadow:0 4px 14px #3978e855}
+.menu{display:none;position:fixed;bottom:85px;left:50%;transform:translateX(-50%);width:min(260px,90%);background:white;border-radius:15px;padding:9px;box-shadow:0 5px 25px #20273525;z-index:9}
+.menu.show{display:block}
+.menu button{display:block;width:100%;text-align:left;border:0;background:white;padding:13px;border-radius:9px;color:#202735}
+.menu button:active{background:#f0f2f6}
 .shift-row{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid #edf0f4}
-.shift-row:last-child{border:0}
 .shift-row input[type=color]{width:38px;height:38px;padding:3px}
-.shift-row .shift-name{flex:1;min-width:0}
-.shift-row .shift-name strong{display:block}
-.shift-row .shift-name small{color:#8992a1}
+.shift-name{flex:1;min-width:0}
+.shift-name strong{display:block}
+.shift-name small{color:#8992a1}
+.item-add{display:flex;gap:7px;margin-top:8px}
+.item-add input{flex:1}
 .danger{color:#d34b54}
-@media(max-width:390px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.date-nav button{padding:9px}.hour{padding-left:44px}.shift-bg{left:44px}.task-on-hour{left:51px}}
+@media(max-width:390px){.grid{grid-template-columns:1fr}.full{grid-column:auto}}
 </style>
 </head>
 <body>
@@ -77,178 +74,163 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
 <header>
   <div class="top">
     <h1>Il mio diario</h1>
-    <button class="secondary" onclick="goToday()">Oggi</button>
+    <span class="muted">Giornata</span>
   </div>
   <div class="date-nav">
     <button onclick="moveDay(-1)">‹</button>
-    <div id="dateTitle"></div>
+    <div id="dateTitle" onclick="openDate()"> </div>
     <button onclick="moveDay(1)">›</button>
   </div>
+  <input type="date" id="datePicker" onchange="selectDate(this.value)">
 </header>
 
 <main>
-  <div class="page active" id="diaryPage">
-    <section class="card">
-      <div class="card-head">
-        <h2>La mia giornata</h2>
-        <span class="muted" id="shiftSummary"></span>
-      </div>
-      <div class="timeline" id="timeline"></div>
-    </section>
+  <section class="card">
+    <div class="card-head">
+      <h2>La mia giornata</h2>
+      <span class="muted" id="shiftSummary"></span>
+    </div>
+    <div id="timeline"></div>
+  </section>
 
-    <section class="card">
-      <div class="card-head">
-        <h2>Attività</h2>
-        <button class="add" onclick="openTaskForm()">+ Task</button>
-      </div>
-      <div id="tasks"></div>
-      <div id="taskForm" class="form">
-        <div class="grid">
-          <div class="full">
-            <label>Nome dell'attività</label>
-            <input id="taskName" placeholder="Es. Fare attività fisica">
-          </div>
-          <div>
-            <label>Ora preferita</label>
-            <input id="taskTime" type="time" value="09:00">
-          </div>
-          <div>
-            <label>Ripetizione</label>
-            <select id="taskFreq" onchange="toggleCustom('task')">
-              <option value="once">Solo questo giorno</option>
-              <option value="daily">Tutti i giorni</option>
-              <option value="every">Ogni N giorni</option>
-              <option value="weekly">Ogni settimana</option>
-              <option value="monthly">Ogni mese</option>
-            </select>
-          </div>
-          <div id="taskEveryBox" style="display:none">
-            <label>Ogni quanti giorni</label>
-            <input id="taskEvery" type="number" min="1" value="2">
-          </div>
-          <div>
-            <label>Inizio</label>
-            <input id="taskStart" type="date">
-          </div>
-          <div>
-            <label>Fine (facoltativa)</label>
-            <input id="taskEnd" type="date">
-          </div>
+  <section class="card">
+    <div class="card-head">
+      <h2>Le mie sezioni</h2>
+    </div>
+    <div id="sections"></div>
+  </section>
+
+  <section class="card" id="shiftManagement" style="display:none">
+    <div class="card-head">
+      <h2>I miei turni</h2>
+      <button class="secondary" onclick="openShiftForm()">+ Turno</button>
+    </div>
+    <div id="shiftList"></div>
+
+    <div id="shiftForm" class="form">
+      <label>Nome del turno</label>
+      <input id="shiftName" placeholder="Es. Mattina">
+      <div class="grid">
+        <div>
+          <label>Inizio</label>
+          <input id="shiftStart" type="time" value="06:00">
         </div>
-        <button class="primary" onclick="saveTask()">Salva attività</button>
-        <button class="cancel" onclick="closeForms()">Annulla</button>
+        <div>
+          <label>Fine</label>
+          <input id="shiftEnd" type="time" value="14:00">
+        </div>
+        <div class="full">
+          <label>Colore</label>
+          <input id="shiftColor" type="color" value="#e7b83f">
+        </div>
       </div>
-    </section>
+      <button class="primary" onclick="saveShift()">Salva turno</button>
+      <button class="cancel" onclick="closeForms()">Annulla</button>
+    </div>
 
-    <section class="card">
-      <div class="card-head">
-        <h2>Le mie sezioni</h2>
-        <button class="add" onclick="openSectionForm()">+ Sezione</button>
+    <div style="border-top:1px solid #edf0f4;margin-top:15px;padding-top:15px">
+      <h2>Rotazione turni</h2>
+      <p class="muted">Inserisci i turni nell'ordine in cui li lavori.</p>
+      <label>Data del primo turno</label>
+      <input id="cycleStart" type="date">
+      <label>Aggiungi un turno alla sequenza</label>
+      <div class="item-add">
+        <select id="cycleChoice"></select>
+        <button class="secondary" onclick="addCycleDay()">+</button>
       </div>
-      <div id="sections"></div>
-      <div id="sectionForm" class="form">
-        <label>Nome della sezione</label>
-        <input id="sectionName" placeholder="Es. Spesa">
+      <div id="cycleList"></div>
+      <label>Numero di ripetizioni</label>
+      <input id="cycleRepeats" type="number" min="1" value="20">
+      <button class="primary" onclick="saveCycle()">Applica rotazione</button>
+      <button class="cancel danger" onclick="clearCycle()">Rimuovi rotazione</button>
+      <p class="muted" id="cycleInfo"></p>
+    </div>
+  </section>
+
+  <section class="card" id="taskForm" style="display:none">
+    <div class="card-head"><h2>Nuova attività</h2></div>
+    <label>Nome dell'attività</label>
+    <input id="taskName" placeholder="Es. Fare attività fisica">
+    <div class="grid">
+      <div>
+        <label>Ora preferita</label>
+        <input id="taskTime" type="time" value="09:00">
+      </div>
+      <div>
         <label>Ripetizione</label>
-        <select id="sectionFreq" onchange="toggleCustom('section')">
+        <select id="taskFreq" onchange="toggleCustom('task')">
           <option value="once">Solo questo giorno</option>
           <option value="daily">Tutti i giorni</option>
           <option value="every">Ogni N giorni</option>
           <option value="weekly">Ogni settimana</option>
           <option value="monthly">Ogni mese</option>
         </select>
-        <div id="sectionEveryBox" style="display:none">
-          <label>Ogni quanti giorni</label>
-          <input id="sectionEvery" type="number" min="1" value="2">
-        </div>
-        <div class="grid">
-          <div>
-            <label>Inizio</label>
-            <input id="sectionStart" type="date">
-          </div>
-          <div>
-            <label>Fine (facoltativa)</label>
-            <input id="sectionEnd" type="date">
-          </div>
-        </div>
-        <button class="primary" onclick="saveSection()">Crea sezione</button>
-        <button class="cancel" onclick="closeForms()">Annulla</button>
       </div>
-    </section>
-  </div>
+      <div id="taskEveryBox" style="display:none">
+        <label>Ogni quanti giorni</label>
+        <input id="taskEvery" type="number" min="1" value="2">
+      </div>
+      <div>
+        <label>Inizio</label>
+        <input id="taskStart" type="date">
+      </div>
+      <div>
+        <label>Fine (facoltativa)</label>
+        <input id="taskEnd" type="date">
+      </div>
+    </div>
+    <button class="primary" onclick="saveTask()">Salva attività</button>
+    <button class="cancel" onclick="closeForms()">Annulla</button>
+  </section>
 
-  <div class="page" id="shiftsPage">
-    <section class="card">
-      <div class="card-head">
-        <h2>I miei turni</h2>
-        <button class="add" onclick="openShiftForm()">+ Turno</button>
+  <section class="card" id="sectionForm" style="display:none">
+    <div class="card-head"><h2>Nuova sezione</h2></div>
+    <label>Titolo della sezione</label>
+    <input id="sectionName" placeholder="Es. Spesa">
+    <label>Ripetizione</label>
+    <select id="sectionFreq" onchange="toggleCustom('section')">
+      <option value="once">Solo questo giorno</option>
+      <option value="daily">Tutti i giorni</option>
+      <option value="every">Ogni N giorni</option>
+      <option value="weekly">Ogni settimana</option>
+      <option value="monthly">Ogni mese</option>
+    </select>
+    <div id="sectionEveryBox" style="display:none">
+      <label>Ogni quanti giorni</label>
+      <input id="sectionEvery" type="number" min="1" value="2">
+    </div>
+    <div class="grid">
+      <div>
+        <label>Inizio</label>
+        <input id="sectionStart" type="date">
       </div>
-      <p class="muted">Crea i tipi di turno con orari e colori. Poi componi la tua sequenza.</p>
-      <div id="shiftList"></div>
-      <div id="shiftForm" class="form">
-        <label>Nome del turno</label>
-        <input id="shiftName" placeholder="Es. Mattina">
-        <div class="grid">
-          <div>
-            <label>Inizio</label>
-            <input id="shiftStart" type="time" value="06:00">
-          </div>
-          <div>
-            <label>Fine</label>
-            <input id="shiftEnd" type="time" value="14:00">
-          </div>
-          <div class="full">
-            <label>Colore</label>
-            <input id="shiftColor" type="color" value="#e7b83f">
-          </div>
-        </div>
-        <button class="primary" onclick="saveShift()">Salva turno</button>
-        <button class="cancel" onclick="closeForms()">Annulla</button>
+      <div>
+        <label>Fine (facoltativa)</label>
+        <input id="sectionEnd" type="date">
       </div>
-    </section>
-
-    <section class="card">
-      <div class="card-head"><h2>La mia rotazione</h2></div>
-      <p class="muted">Inserisci i turni nell'ordine in cui li lavori. La sequenza verrà ripetuta automaticamente.</p>
-      <div class="grid">
-        <div class="full">
-          <label>Data del primo turno</label>
-          <input id="cycleStart" type="date">
-        </div>
-        <div class="full">
-          <label>Turno del primo giorno</label>
-          <select id="cycleChoice"></select>
-        </div>
+    </div>
+    <div id="sectionItems">
+      <label>Elenco della sezione</label>
+      <div id="sectionItemList"></div>
+      <div class="item-add">
+        <input id="sectionItemInput" placeholder="Scrivi un elemento">
+        <button class="secondary" onclick="addSectionDraftItem()">+</button>
       </div>
-      <button class="secondary" style="width:100%;margin-top:8px" onclick="addCycleDay()">+ Aggiungi giorno alla sequenza</button>
-      <div id="cycleList" style="margin-top:10px"></div>
-      <div class="grid">
-        <div>
-          <label>Numero di ripetizioni</label>
-          <input id="cycleRepeats" type="number" min="1" value="20">
-        </div>
-      </div>
-      <button class="primary" onclick="saveCycle()">Applica rotazione</button>
-      <button class="cancel danger" onclick="clearCycle()">Rimuovi rotazione</button>
-      <p class="muted" id="cycleInfo"></p>
-    </section>
-  </div>
-
-  <div class="page" id="calendarPage">
-    <section class="card">
-      <div class="card-head"><h2>Vai a una data</h2></div>
-      <label>Seleziona il giorno</label>
-      <input type="date" id="calendarDate" onchange="selectDate(this.value)">
-      <button class="primary" onclick="goToday()">Torna a oggi</button>
-    </section>
-  </div>
+    </div>
+    <button class="primary" onclick="saveSection()">Salva sezione</button>
+    <button class="cancel" onclick="closeForms()">Annulla</button>
+  </section>
 </main>
 
-<nav class="bottom">
-  <button class="active" onclick="showPage('diaryPage',this)">Diario</button>
-  <button onclick="showPage('shiftsPage',this)">Turni</button>
-  <button onclick="showPage('calendarPage',this)">Calendario</button>
-</nav>
+<div class="menu" id="addMenu">
+  <button onclick="openTaskForm()">✓ Nuova task</button>
+  <button onclick="openShiftManagement()">◷ Gestisci turni</button>
+  <button onclick="openSectionForm()">☰ Nuova sezione</button>
+</div>
+
+<div class="bottom">
+  <button class="plus" onclick="toggleMenu()">+</button>
+</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -268,35 +250,38 @@ let data={
   checks:read('checks',{}),
   items:read('items',{})
 };
-let selected=today(),cycleDraft=[];
+let selected=today(),cycleDraft=[],sectionDraft=[];
 
 function persist(){
   for(let k in data)write(k,data[k]);
 }
-function showPage(id,btn){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  $(id).classList.add('active');
-  document.querySelectorAll('.bottom button').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  if(id==='shiftsPage')renderShifts();
-}
-function moveDay(n){selected=addDays(selected,n);render()}
-function goToday(){selected=today();render();showPage('diaryPage',document.querySelector('.bottom button'))}
-function selectDate(s){if(s){selected=s;render();showPage('diaryPage',document.querySelector('.bottom button'))}}
-function dateLabel(s){
-  return parseDate(s).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-}
 function safe(s){
   return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-function shiftFor(day){
-  let c=data.cycle;
-  if(!c||!c.days.length||day<c.start)return null;
-  let diff=Math.round((parseDate(day)-parseDate(c.start))/86400000);
-  let index=Math.floor(diff%c.days.length);
-  if(diff>=c.days.length*c.repeats)return null;
-  let id=c.days[index];
-  return data.shifts.find(s=>s.id===id)||null;
+function dateLabel(s){
+  return parseDate(s).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+function openDate(){
+  $('datePicker').value=selected;
+  $('datePicker').showPicker? $('datePicker').showPicker():$('datePicker').click();
+}
+function selectDate(s){
+  if(s){selected=s;render();}
+}
+function moveDay(n){selected=addDays(selected,n);render()}
+function toggleMenu(){
+  $('addMenu').classList.toggle('show');
+}
+function closeForms(){
+  ['taskForm','sectionForm','shiftForm'].forEach(id=>{
+    if($(id))$(id).classList.remove('show');
+  });
+  $('addMenu').classList.remove('show');
+}
+function showForm(id){
+  closeForms();
+  $(id).style.display='block';
+  $(id).scrollIntoView({behavior:'smooth',block:'center'});
 }
 function occurs(obj,day){
   if(day<obj.start||(obj.end&&day>obj.end))return false;
@@ -311,51 +296,53 @@ function occurs(obj,day){
   }
   return false;
 }
-function checkKey(type,id,day){return type+'_'+id+'_'+day}
-function isChecked(type,id,day){return !!data.checks[checkKey(type,id,day)]}
-function setChecked(type,id,day,val){
-  let k=checkKey(type,id,day);
+function shiftFor(day){
+  let c=data.cycle;
+  if(!c||!c.days.length||day<c.start)return null;
+  let diff=Math.round((parseDate(day)-parseDate(c.start))/86400000);
+  if(diff>=c.days.length*c.repeats)return null;
+  return data.shifts.find(s=>s.id===c.days[diff%c.days.length])||null;
+}
+function checkKey(id,day){return id+'_'+day}
+function isChecked(id,day){return !!data.checks[checkKey(id,day)]}
+function setChecked(id,day,val){
+  let k=checkKey(id,day);
   if(val)data.checks[k]=true;else delete data.checks[k];
   persist();render();
 }
 function render(){
-  $('dateTitle').innerHTML=safe(dateLabel(selected)).replace(/, /,'<small>').replace(/$/,'</small>');
-  $('calendarDate').value=selected;
-  renderTimeline();renderTasks();renderSections();
+  $('dateTitle').innerHTML=safe(dateLabel(selected)).replace(', ','<small>')+'</small>';
+  renderTimeline();
+  renderSections();
 }
 function renderTimeline(){
   let shift=shiftFor(selected);
   $('shiftSummary').textContent=shift?shift.name:'';
+  let tasks=data.tasks.filter(t=>occurs(t,selected)).sort((a,b)=>a.time.localeCompare(b.time));
   let html='';
   for(let h=0;h<24;h++){
-    let hh=String(h).padStart(2,'0')+':00';
-    let active=false;
-    if(shift){
-      let start=Number(shift.start.split(':')[0])+Number(shift.start.split(':')[1])/60;
-      let end=Number(shift.end.split(':')[0])+Number(shift.end.split(':')[1])/60;
-      active=start<end?(h>=start&&h<end):(h>=start||h<end);
-    }
+    let start=shift?Number(shift.start.slice(0,2))+Number(shift.start.slice(3))/60:0;
+    let end=shift?Number(shift.end.slice(0,2))+Number(shift.end.slice(3))/60:0;
+    let active=shift&&(start<end?(h>=start&&h<end):(h>=start||h<end));
+    let hourTasks=tasks.filter(t=>Number(t.time.slice(0,2))===h);
     html+=`<div class="hour">
-      <span class="hour-label">${hh}</span>
-      ${active?`<div class="shift-bg" style="background:${shift.color};border-color:${shift.color}"></div>
-      ${h===Number(shift.start.split(':')[0])?`<span class="shift-label" style="color:${shift.color}">${safe(shift.name)} · ${shift.start}–${shift.end}</span>`:''}`:''}
+      <span class="hour-label">${String(h).padStart(2,'0')}:00</span>
+      ${active?`<div class="shift-bg" style="background:${shift.color};border-color:${shift.color}"></div>`:''}
+      ${active&&h===Math.floor(start)?`<span class="shift-label" style="color:${shift.color}">${safe(shift.name)} · ${shift.start}–${shift.end}</span>`:''}
+      <div class="hour-tasks">
+        ${hourTasks.map(t=>{
+          let done=isChecked(t.id,selected);
+          return `<div class="task ${done?'done':''}">
+            <input type="checkbox" ${done?'checked':''} onchange="setChecked('${t.id}','${selected}',this.checked)">
+            <span class="task-name">${safe(t.name)}</span>
+            <span class="muted">${t.time}</span>
+            <button class="icon-btn" onclick="deleteTask('${t.id}')">×</button>
+          </div>`;
+        }).join('')}
+      </div>
     </div>`;
   }
   $('timeline').innerHTML=html;
-}
-function renderTasks(){
-  let tasks=data.tasks.filter(t=>occurs(t,selected)).sort((a,b)=>a.time.localeCompare(b.time));
-  $('tasks').innerHTML=tasks.length?tasks.map(t=>{
-    let done=isChecked('task',t.id,selected);
-    return `<div class="task ${done?'done':''}">
-      <input type="checkbox" ${done?'checked':''} onchange="setChecked('task','${t.id}','${selected}',this.checked)">
-      <div class="task-text">
-        <div class="task-name">${safe(t.name)}</div>
-        <div class="task-time">${safe(t.time)}${t.freq!=='once'?' · Ricorrente':''}</div>
-      </div>
-      <button class="icon-btn" onclick="deleteTask('${t.id}')" aria-label="Elimina">×</button>
-    </div>`;
-  }).join(''):'<div class="empty">Nessuna attività per questo giorno.</div>';
 }
 function renderSections(){
   let sections=data.sections.filter(s=>occurs(s,selected));
@@ -367,7 +354,7 @@ function renderSections(){
         <div class="section-name">${safe(s.name)}</div>
         <div class="section-info">${checked}/${list.length} completati · Tocca per aprire</div>
       </button>
-      <button class="icon-btn" onclick="deleteSection('${s.id}')" aria-label="Elimina sezione">×</button>
+      <button class="icon-btn" onclick="deleteSection('${s.id}')">×</button>
     </div>
     <div id="items_${s.id}" class="items" style="display:none">
       ${list.map(i=>`<div class="item ${i.done?'checked':''}">
@@ -377,24 +364,20 @@ function renderSections(){
       </div>`).join('')}
       <div class="item-add">
         <input id="new_${s.id}" placeholder="Aggiungi elemento">
-        <button class="add" onclick="addItem('${s.id}')">+</button>
+        <button class="secondary" onclick="addItem('${s.id}')">+</button>
       </div>
     </div>`;
   }).join(''):'<div class="empty">Nessuna sezione per questo giorno.</div>';
 }
-function closeForms(){
-  ['taskForm','sectionForm','shiftForm'].forEach(id=>$(id).classList.remove('show'));
-}
 function openTaskForm(){
-  closeForms();$('taskForm').classList.add('show');
+  showForm('taskForm');
   $('taskName').value='';$('taskTime').value='09:00';
   $('taskFreq').value='once';$('taskEveryBox').style.display='none';
-  $('taskEvery').value=2;$('taskStart').value=selected;$('taskEnd').value='';
+  $('taskStart').value=selected;$('taskEnd').value='';
   $('taskName').focus();
 }
 function toggleCustom(type){
-  let freq=$(type+'Freq').value;
-  $(type+'EveryBox').style.display=freq==='every'?'block':'none';
+  $(type+'EveryBox').style.display=$(type+'Freq').value==='every'?'block':'none';
 }
 function saveTask(){
   let name=$('taskName').value.trim();
@@ -407,24 +390,37 @@ function saveTask(){
 }
 function deleteTask(id){
   if(!confirm('Eliminare questa attività e la sua ricorrenza?'))return;
-  data.tasks=data.tasks.filter(t=>t.id!==id);persist();render();
+  data.tasks=data.tasks.filter(t=>t.id!==id);
+  persist();render();
 }
 function openSectionForm(){
-  closeForms();$('sectionForm').classList.add('show');
+  showForm('sectionForm');
   $('sectionName').value='';$('sectionFreq').value='once';
   $('sectionEveryBox').style.display='none';
   $('sectionEvery').value=2;$('sectionStart').value=selected;$('sectionEnd').value='';
+  sectionDraft=[];renderSectionDraft();
   $('sectionName').focus();
 }
+function addSectionDraftItem(){
+  let input=$('sectionItemInput'),text=input.value.trim();
+  if(!text)return;
+  sectionDraft.push(text);input.value='';renderSectionDraft();input.focus();
+}
+function renderSectionDraft(){
+  $('sectionItemList').innerHTML=sectionDraft.map((x,i)=>`
+    <div class="item"><span>${safe(x)}</span>
+    <button class="icon-btn" onclick="removeSectionDraftItem(${i})">×</button></div>`).join('');
+}
+function removeSectionDraftItem(i){sectionDraft.splice(i,1);renderSectionDraft()}
 function saveSection(){
   let name=$('sectionName').value.trim();
-  if(!name)return alert('Inserisci il nome della sezione.');
+  if(!name)return alert('Inserisci il titolo della sezione.');
   let start=$('sectionStart').value||selected,end=$('sectionEnd').value;
   if(end&&end<start)return alert('La data finale precede quella iniziale.');
   let id=uid();
   data.sections.push({id,name,freq:$('sectionFreq').value,
     every:Number($('sectionEvery').value)||2,start,end});
-  data.items[id]=[];
+  data.items[id]=sectionDraft.map(text=>({id:uid(),text,done:false}));
   persist();closeForms();render();
 }
 function toggleSection(id){
@@ -438,7 +434,6 @@ function addItem(id){
   data.items[id].push({id:uid(),text,done:false});
   persist();renderSections();
   $('items_'+id).style.display='block';
-  $('new_'+id).focus();
 }
 function toggleItem(sid,iid,done){
   let item=(data.items[sid]||[]).find(i=>i.id===iid);
@@ -453,18 +448,23 @@ function deleteSection(id){
   data.sections=data.sections.filter(s=>s.id!==id);
   delete data.items[id];persist();renderSections();
 }
+function openShiftManagement(){
+  closeForms();
+  $('shiftManagement').style.display='block';
+  $('shiftManagement').scrollIntoView({behavior:'smooth',block:'start'});
+  renderShifts();
+}
 function openShiftForm(){
-  closeForms();$('shiftForm').classList.add('show');
+  $('shiftForm').classList.add('show');
   $('shiftName').value='';$('shiftStart').value='06:00';
   $('shiftEnd').value='14:00';$('shiftColor').value='#e7b83f';
-  $('shiftName').focus();
 }
 function saveShift(){
   let name=$('shiftName').value.trim();
   if(!name)return alert('Inserisci il nome del turno.');
   let s={id:uid(),name,start:$('shiftStart').value,end:$('shiftEnd').value,color:$('shiftColor').value};
   if(s.start===s.end)return alert('Inizio e fine non possono coincidere.');
-  data.shifts.push(s);persist();closeForms();renderShifts();
+  data.shifts.push(s);persist();$('shiftForm').classList.remove('show');renderShifts();
 }
 function renderShifts(){
   $('shiftList').innerHTML=data.shifts.length?data.shifts.map(s=>`
@@ -479,9 +479,7 @@ function renderShifts(){
     $('cycleStart').value=data.cycle.start;
     $('cycleRepeats').value=data.cycle.repeats;
   }else{
-    cycleDraft=[];
-    $('cycleStart').value=selected;
-    $('cycleRepeats').value=20;
+    cycleDraft=[];$('cycleStart').value=selected;$('cycleRepeats').value=20;
   }
   renderCycle();
 }
@@ -491,23 +489,20 @@ function changeShiftColor(id,color){
   persist();render();
 }
 function deleteShift(id){
-  if(data.cycle&&data.cycle.days.includes(id)){
-    return alert('Questo turno è nella rotazione. Rimuovi o modifica prima la rotazione.');
-  }
+  if(data.cycle&&data.cycle.days.includes(id))return alert('Questo turno è nella rotazione. Rimuovi prima la rotazione.');
   if(!confirm('Eliminare questo tipo di turno?'))return;
   data.shifts=data.shifts.filter(s=>s.id!==id);
   persist();renderShifts();
 }
 function addCycleDay(){
   if(!data.shifts.length)return alert('Crea prima almeno un tipo di turno.');
-  cycleDraft.push($('cycleChoice').value);
-  renderCycle();
+  cycleDraft.push($('cycleChoice').value);renderCycle();
 }
 function renderCycle(){
   $('cycleList').innerHTML=cycleDraft.map((id,i)=>{
     let s=data.shifts.find(s=>s.id===id);
     return `<div class="shift-row">
-      <span style="color:#8992a1;width:20px">${i+1}.</span>
+      <span>${i+1}.</span>
       <div class="shift-name"><strong>${safe(s?s.name:'Turno eliminato')}</strong></div>
       <button class="icon-btn" onclick="removeCycleDay(${i})">×</button>
     </div>`;
@@ -523,8 +518,7 @@ function saveCycle(){
   if(!cycleDraft.length)return alert('Aggiungi almeno un turno alla sequenza.');
   if(!repeats||repeats<1)return alert('Inserisci un numero valido di ripetizioni.');
   data.cycle={start,days:[...cycleDraft],repeats};
-  persist();renderShifts();render();
-  alert('Rotazione salvata.');
+  persist();renderShifts();render();alert('Rotazione salvata.');
 }
 function clearCycle(){
   if(!confirm('Rimuovere la rotazione dei turni?'))return;
