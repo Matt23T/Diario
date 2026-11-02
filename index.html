@@ -39,6 +39,7 @@ h2{font-size:16px;margin:0}
 .section-row{display:flex;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid #f0f1f4}
 .section-open{flex:1;text-align:left;border:0;background:transparent;color:#202735;padding:0}
 .section-name{font-weight:600}
+.section-name.done{text-decoration:line-through;opacity:.55}
 .section-info{font-size:12px;color:#8992a1;margin-top:4px}
 .items{padding:5px 0 10px 12px}
 .item{display:flex;align-items:center;gap:9px;padding:8px 0}
@@ -59,6 +60,8 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
 .overview-day{font-size:13px;font-weight:700;color:#626d7e;padding:12px 0 6px;border-top:1px solid #edf0f4}
 .overview-day:first-child{border-top:0;padding-top:0}
 .overview-row{display:flex;align-items:center;gap:10px;padding:9px 7px;margin:3px 0;border-radius:8px;background:#f5f6f8;border-left:3px solid #3978e8;font-size:13px}
+.overview-row input{width:17px;height:17px;margin:0;accent-color:#3978e8;flex-shrink:0}
+.overview-row.done .overview-name{text-decoration:line-through;opacity:.55}
 .overview-time{color:#8992a1;white-space:nowrap}
 .overview-name{flex:1;overflow-wrap:anywhere}
 .weekday-options{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
@@ -570,12 +573,15 @@ function renderActivityOverview(){
     if(remaining<=0)return;
     html+=`<div class="overview-day">${g.name}</div>`;
     let visible=tasks.slice(0,remaining);
-    html+=visible.map(t=>`
-      <div class="overview-row" style="border-left-color:${t.color||'#3978e8'}">
+    html+=visible.map(t=>{
+      let done=isChecked(t.id,g.day);
+      return `
+      <div class="overview-row ${done?'done':''}" style="border-left-color:${t.color||'#3978e8'}">
+        <input type="checkbox" ${done?'checked':''} onchange="setChecked('${t.id}','${g.day}',this.checked)">
         <span class="overview-time">${t.time||'Senza orario'}${t.timeEnd?'–'+t.timeEnd:''}</span>
         <span class="overview-name">${safe(t.name)}</span>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
     remaining-=visible.length;
   });
   if(total>20){
@@ -647,9 +653,10 @@ function renderSections(){
   $('sections').innerHTML=sections.length?sections.map(s=>{
     let list=data.items[s.id]||[];
     let checked=list.filter(i=>isItemChecked(s.id,i,selected)).length;
+    let completed=list.length>0&&checked===list.length;
     return `<div class="section-row">
       <button class="section-open" onclick="toggleSection('${s.id}')">
-        <div class="section-name">${safe(s.name)}</div>
+        <div class="section-name ${completed?'done':''}">${safe(s.name)}</div>
         <div class="section-info">${checked}/${list.length} completati · Tocca per aprire</div>
       </button>
       <button class="icon-btn" onclick="deleteSection('${s.id}')">×</button>
