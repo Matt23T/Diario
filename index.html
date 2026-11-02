@@ -11,8 +11,8 @@ body{margin:0;background:#f5f6f8;color:#202735;font:15px -apple-system,BlinkMacS
 button,input,select{font:inherit}
 button{cursor:pointer}
 header{background:white;padding:18px 16px 14px;position:sticky;top:0;z-index:5;border-bottom:1px solid #e8eaf0}
-.top{display:flex;justify-content:space-between;align-items:center}
-h1{font-size:22px;margin:0}
+.top{display:flex;justify-content:flex-end;align-items:center}
+.today-btn{border:0;background:#f0f2f6;border-radius:10px;padding:9px 14px;color:#30394a}
 .date-nav{display:flex;align-items:center;justify-content:space-between;margin-top:18px}
 .date-nav button{border:0;background:#f0f2f6;border-radius:10px;padding:9px 14px;color:#30394a}
 #dateTitle{font-weight:700;text-align:center;cursor:pointer}
@@ -73,8 +73,7 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
 
 <header>
   <div class="top">
-    <h1>Il mio diario</h1>
-    <span class="muted">Giornata</span>
+    <button class="today-btn" onclick="goToday()">Oggi</button>
   </div>
   <div class="date-nav">
     <button onclick="moveDay(-1)">‹</button>
@@ -269,6 +268,7 @@ function selectDate(s){
   if(s){selected=s;render();}
 }
 function moveDay(n){selected=addDays(selected,n);render()}
+function goToday(){selected=today();render()}
 function toggleMenu(){
   $('addMenu').classList.toggle('show');
 }
