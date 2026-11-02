@@ -235,6 +235,13 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
         <label>Ogni quanti giorni</label>
         <input id="taskEvery" type="number" min="1" value="2">
       </div>
+      <div class="full">
+        <label>Se non viene completata</label>
+        <select id="taskCarry">
+          <option value="reset">Non riproporla</option>
+          <option value="carry">Ricordamela nei giorni successivi</option>
+        </select>
+      </div>
       <div>
         <label>Inizio</label>
         <input id="taskStart" type="date">
@@ -386,8 +393,8 @@ function selectCalendarDate(date){
   render();
 }
 function openSettings(){
+  closeActivityManager();
   $('shiftManagement').style.display='none';
-  $('activityManager').style.display='none';
   $('settingsOverlay').classList.add('show');
 }
 function closeSettings(event){
@@ -422,6 +429,17 @@ function occurs(obj,day){
   if(obj.freq==='monthly'){
     let a=parseDate(obj.start),b=parseDate(day);
     return a.getDate()===b.getDate();
+  }
+  return false;
+}
+function occursTask(t,day){
+  if(occurs(t,day))return true;
+  if(t.carryOver!==true||day<=t.start)return false;
+  let d=addDays(day,-1);
+  while(d>=t.start){
+    if(isChecked(t.id,d))return false;
+    if(occurs(t,d))return true;
+    d=addDays(d,-1);
   }
   return false;
 }
@@ -487,7 +505,7 @@ function render(){
 function renderTimeline(){
   let shift=shiftFor(selected);
   $('shiftSummary').textContent=shift?shift.name:'';
-  let tasks=data.tasks.filter(t=>occurs(t,selected)).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+  let tasks=data.tasks.filter(t=>occursTask(t,selected)).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
   let timedSections=data.sections.filter(s=>s.time&&occursSection(s,selected));
   let timedTasks=tasks.filter(t=>t.time);
   let untimedTasks=tasks.filter(t=>!t.time);
@@ -574,6 +592,7 @@ function openTaskForm(){
   $('taskName').value='';$('taskTime').value='';
   $('taskTimeEnd').value='';$('taskColor').value='#3978e8';
   $('taskFreq').value='once';$('taskEveryBox').style.display='none';
+  $('taskCarry').value='reset';
   $('taskStart').value=selected;$('taskEnd').value='';
   $('taskName').focus();
 }
@@ -589,7 +608,8 @@ function saveTask(){
   let start=$('taskStart').value||selected,end=$('taskEnd').value;
   if(end&&end<start)return alert('La data finale precede quella iniziale.');
   let task={name,time,timeEnd,color:$('taskColor').value,
-    freq:$('taskFreq').value,every:Number($('taskEvery').value)||2,start,end};
+    freq:$('taskFreq').value,every:Number($('taskEvery').value)||2,start,end,
+    carryOver:$('taskCarry').value==='carry'};
   if(editingTaskId){
     Object.assign(data.tasks.find(t=>t.id===editingTaskId),task);
     editingTaskId=null;closeForms();render();
@@ -705,6 +725,10 @@ function openActivityManager(){
   $('activityManager').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function closeActivityManager(){
+  closeForms();
+  editingTaskId=null;
+  editingSectionId=null;
+  sectionEditItems=null;
   $('activityManager').style.display='none';
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -737,6 +761,7 @@ function editTask(id){
   $('taskTimeEnd').value=t.timeEnd||'';$('taskColor').value=t.color||'#3978e8';
   $('taskFreq').value=t.freq;$('taskEvery').value=t.every||2;
   $('taskEveryBox').style.display=t.freq==='every'?'block':'none';
+  $('taskCarry').value=t.carryOver===true?'carry':'reset';
   $('taskStart').value=t.start;$('taskEnd').value=t.end||'';
 }
 function editSection(id){
