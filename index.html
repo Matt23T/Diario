@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#f5f6f8">
 <title>Il mio diario</title>
 <style>
@@ -295,6 +295,9 @@ function closeForms(){
   ['taskForm','sectionForm','shiftForm'].forEach(id=>{
     if($(id))$(id).classList.remove('show');
   });
+  $('taskForm').style.display='none';
+  $('sectionForm').style.display='none';
+  $('shiftForm').style.display='none';
   $('addMenu').classList.remove('show');
 }
 function showForm(id){
@@ -567,7 +570,7 @@ function saveShift(){
   if(!name)return alert('Inserisci il nome del turno.');
   let s={id:uid(),name,start:$('shiftStart').value,end:$('shiftEnd').value,color:$('shiftColor').value};
   if(s.start===s.end)return alert('Inizio e fine non possono coincidere.');
-  data.shifts.push(s);persist();$('shiftForm').classList.remove('show');renderShifts();
+  data.shifts.push(s);persist();closeForms();renderShifts();
 }
 function renderShifts(){
   $('shiftList').innerHTML=data.shifts.length?data.shifts.map(s=>`
