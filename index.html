@@ -199,6 +199,11 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
       <label>Ogni quanti giorni</label>
       <input id="sectionEvery" type="number" min="1" value="2">
     </div>
+    <label>Se non viene completata</label>
+    <select id="sectionCarry">
+      <option value="reset">Ricominciare normalmente</option>
+      <option value="carry">Riproporla nei giorni successivi</option>
+    </select>
     <div class="grid">
       <div>
         <label>Inizio</label>
@@ -248,7 +253,8 @@ let data={
   tasks:read('tasks',[]),
   sections:read('sections',[]),
   checks:read('checks',{}),
-  items:read('items',{})
+  items:read('items',{}),
+  activityChecks:read('activityChecks',{})
 };
 let selected=today(),cycleDraft=[],sectionDraft=[];
 
@@ -297,6 +303,25 @@ function occurs(obj,day){
   }
   return false;
 }
+function carriesOver(s){
+  return s.carryOver===undefined||s.carryOver===true;
+}
+function sectionCompleted(s){
+  let list=data.items[s.id]||[];
+  return list.length>0&&list.every(i=>i.done);
+}
+function occursSection(s,day){
+  if(occurs(s,day))return true;
+  return carriesOver(s)&&day>s.start&&!sectionCompleted(s);
+}
+function itemCheckKey(sid,iid,day){
+  return sid+'_'+iid+'_'+day;
+}
+function isItemChecked(sid,item,day){
+  let section=data.sections.find(s=>s.id===sid);
+  if(section&&carriesOver(section))return !!item.done;
+  return !!data.activityChecks[itemCheckKey(sid,item.id,day)];
+}
 function shiftFor(day){
   let c=data.cycle;
   if(!c||!c.days.length||day<c.start)return null;
@@ -320,7 +345,7 @@ function renderTimeline(){
   let shift=shiftFor(selected);
   $('shiftSummary').textContent=shift?shift.name:'';
   let tasks=data.tasks.filter(t=>occurs(t,selected)).sort((a,b)=>a.time.localeCompare(b.time));
-  let timedSections=data.sections.filter(s=>s.time&&occurs(s,selected));
+  let timedSections=data.sections.filter(s=>s.time&&occursSection(s,selected));
   let html='';
   for(let h=0;h<24;h++){
     let start=shift?Number(shift.start.slice(0,2))+Number(shift.start.slice(3))/60:0;
@@ -354,10 +379,10 @@ function renderTimeline(){
   $('timeline').innerHTML=html;
 }
 function renderSections(){
-  let sections=data.sections.filter(s=>occurs(s,selected));
+  let sections=data.sections.filter(s=>occursSection(s,selected));
   $('sections').innerHTML=sections.length?sections.map(s=>{
     let list=data.items[s.id]||[];
-    let checked=list.filter(i=>i.done).length;
+    let checked=list.filter(i=>isItemChecked(s.id,i,selected)).length;
     return `<div class="section-row">
       <button class="section-open" onclick="toggleSection('${s.id}')">
         <div class="section-name">${safe(s.name)}</div>
@@ -366,11 +391,14 @@ function renderSections(){
       <button class="icon-btn" onclick="deleteSection('${s.id}')">×</button>
     </div>
     <div id="items_${s.id}" class="items" style="display:none">
-      ${list.map(i=>`<div class="item ${i.done?'checked':''}">
-        <input type="checkbox" ${i.done?'checked':''} onchange="toggleItem('${s.id}','${i.id}',this.checked)">
-        <span>${safe(i.text)}</span>
-        <button class="icon-btn" onclick="deleteItem('${s.id}','${i.id}')">×</button>
-      </div>`).join('')}
+      ${list.map(i=>{
+        let done=isItemChecked(s.id,i,selected);
+        return `<div class="item ${done?'checked':''}">
+          <input type="checkbox" ${done?'checked':''} onchange="toggleItem('${s.id}','${i.id}',this.checked,'${selected}')">
+          <span>${safe(i.text)}</span>
+          <button class="icon-btn" onclick="deleteItem('${s.id}','${i.id}')">×</button>
+        </div>`;
+      }).join('')}
       <div class="item-add">
         <input id="new_${s.id}" placeholder="Aggiungi elemento">
         <button class="secondary" onclick="addItem('${s.id}')">+</button>
@@ -405,6 +433,7 @@ function deleteTask(id){
 function openSectionForm(){
   showForm('sectionForm');
   $('sectionName').value='';$('sectionTime').value='';$('sectionFreq').value='once';
+  $('sectionCarry').value='reset';
   $('sectionEveryBox').style.display='none';
   $('sectionEvery').value=2;$('sectionStart').value=selected;$('sectionEnd').value='';
   sectionDraft=[];renderSectionDraft();
@@ -428,7 +457,8 @@ function saveSection(){
   if(end&&end<start)return alert('La data finale precede quella iniziale.');
   let id=uid();
   data.sections.push({id,name,time:$('sectionTime').value,
-    freq:$('sectionFreq').value,every:Number($('sectionEvery').value)||2,start,end});
+    freq:$('sectionFreq').value,every:Number($('sectionEvery').value)||2,start,end,
+    carryOver:$('sectionCarry').value==='carry'});
   data.items[id]=sectionDraft.map(text=>({id:uid(),text,done:false}));
   persist();closeForms();render();
 }
@@ -444,9 +474,19 @@ function addItem(id){
   persist();renderSections();
   $('items_'+id).style.display='block';
 }
-function toggleItem(sid,iid,done){
+function toggleItem(sid,iid,done,day){
   let item=(data.items[sid]||[]).find(i=>i.id===iid);
-  if(item){item.done=done;persist();renderSections();$('items_'+sid).style.display='block';}
+  let section=data.sections.find(s=>s.id===sid);
+  if(item&&section){
+    if(carriesOver(section)){
+      item.done=done;
+    }else{
+      let key=itemCheckKey(sid,iid,day);
+      if(done)data.activityChecks[key]=true;
+      else delete data.activityChecks[key];
+    }
+    persist();renderSections();$('items_'+sid).style.display='block';
+  }
 }
 function deleteItem(sid,iid){
   data.items[sid]=(data.items[sid]||[]).filter(i=>i.id!==iid);
