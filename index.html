@@ -463,7 +463,7 @@ function occurs(obj,day){
 }
 function occursTask(t,day){
   if(occurs(t,day))return true;
-  if(t.carryOver!==true||day<=t.start)return false;
+  if(day>today()||t.carryOver!==true||day<=t.start)return false;
   let d=addDays(day,-1);
   while(d>=t.start){
     if(isChecked(t.id,d))return false;
@@ -473,7 +473,7 @@ function occursTask(t,day){
   return false;
 }
 function hasCarryReminder(t,day){
-  if(t.carryOver!==true||day<=t.start)return false;
+  if(day>today()||t.carryOver!==true||day<=t.start)return false;
   let d=addDays(day,-1);
   while(d>=t.start){
     if(isChecked(t.id,d))return false;
