@@ -25,13 +25,16 @@ h2{font-size:16px;margin:0}
 .muted{color:#8992a1;font-size:13px}
 .hour{min-height:55px;position:relative;border-top:1px solid #e9ecf1;padding:5px 4px 5px 51px}
 .hour-label{position:absolute;left:0;top:-8px;font-size:11px;color:#8992a1;background:white;padding-right:7px}
-.shift-bg{position:absolute;left:51px;right:0;top:0;bottom:0;opacity:.20;border-left:4px solid}
+.shift-bg,.activity-bg{position:absolute;left:51px;right:0;top:0;bottom:0;pointer-events:none}
+.shift-bg{opacity:.20;border-left:4px solid}
+.activity-bg{opacity:.24}
 .shift-label{position:absolute;left:58px;top:3px;font-size:10px;font-weight:700;opacity:.9}
 .hour-tasks{position:relative;z-index:2;margin-top:7px}
 .task{display:flex;align-items:center;gap:8px;padding:6px 7px;margin:3px 0;border-radius:8px;background:#f0f2f6;font-size:13px}
 .task input{width:17px;height:17px;margin:0;accent-color:#3978e8;flex-shrink:0}
 .task-name{flex:1;overflow-wrap:anywhere}
 .task.done .task-name{text-decoration:line-through;opacity:.55}
+.activity-task{background:#ffffffd9}
 .icon-btn{border:0;background:transparent;color:#8992a1;padding:2px 5px;font-size:18px}
 .section-row{display:flex;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid #f0f1f4}
 .section-open{flex:1;text-align:left;border:0;background:transparent;color:#202735;padding:0}
@@ -43,6 +46,7 @@ h2{font-size:16px;margin:0}
 .item span{flex:1;overflow-wrap:anywhere}
 .item.checked span{text-decoration:line-through;color:#9ba2ad}
 input,select{border:1px solid #dfe3ea;border-radius:9px;padding:11px;background:white;color:#202735;width:100%;min-width:0}
+input[type=color]{height:43px;padding:4px}
 label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
 .form{display:none;border-top:1px solid #edf0f4;padding-top:12px;margin-top:12px}
 .form.show{display:block}
@@ -93,7 +97,7 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
 
   <section class="card">
     <div class="card-head">
-      <h2>ATTIVITÀ</h2>
+      <h2>LISTE</h2>
     </div>
     <div id="sections"></div>
   </section>
@@ -151,8 +155,16 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
     <input id="taskName" placeholder="Es. Fare attività fisica">
     <div class="grid">
       <div>
-        <label>Ora preferita</label>
-        <input id="taskTime" type="time" value="09:00">
+        <label>Ora di inizio (facoltativa)</label>
+        <input id="taskTime" type="time">
+      </div>
+      <div>
+        <label>Ora di fine (facoltativa)</label>
+        <input id="taskTimeEnd" type="time">
+      </div>
+      <div class="full">
+        <label>Colore</label>
+        <input id="taskColor" type="color" value="#3978e8">
       </div>
       <div>
         <label>Ripetizione</label>
@@ -182,8 +194,8 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
   </section>
 
   <section class="card" id="sectionForm" style="display:none">
-    <div class="card-head"><h2>Nuova attività</h2></div>
-    <label>Nome dell'attività</label>
+    <div class="card-head"><h2>Nuova lista</h2></div>
+    <label>Nome della lista</label>
     <input id="sectionName" placeholder="Es. Spesa">
     <label>Orario (facoltativo)</label>
     <input id="sectionTime" type="time">
@@ -215,22 +227,22 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
       </div>
     </div>
     <div id="sectionItems">
-      <label>Elenco attività</label>
+      <label>Voci della lista</label>
       <div id="sectionItemList"></div>
       <div class="item-add">
-        <input id="sectionItemInput" placeholder="Scrivi un elemento">
+        <input id="sectionItemInput" placeholder="Scrivi una voce">
         <button class="secondary" onclick="addSectionDraftItem()">+</button>
       </div>
     </div>
-    <button class="primary" onclick="saveSection()">Salva attività</button>
+    <button class="primary" onclick="saveSection()">Salva lista</button>
     <button class="cancel" onclick="closeForms()">Annulla</button>
   </section>
 </main>
 
 <div class="menu" id="addMenu">
-  <button onclick="openTaskForm()">✓ Nuova task</button>
+  <button onclick="openTaskForm()">✓ Nuova attività</button>
   <button onclick="openShiftManagement()">◷ Gestisci turni</button>
-  <button onclick="openSectionForm()">☰ Nuova attività</button>
+  <button onclick="openSectionForm()">☰ Nuova lista</button>
 </div>
 
 <div class="bottom">
@@ -336,6 +348,26 @@ function setChecked(id,day,val){
   if(val)data.checks[k]=true;else delete data.checks[k];
   persist();render();
 }
+function timeMinutes(t){
+  let [h,m]=t.split(':').map(Number);
+  return h*60+m;
+}
+function mixColors(colors){
+  let rgb=colors.map(c=>c.match(/[a-f\d]{2}/gi).map(v=>parseInt(v,16)));
+  let mixed=[0,1,2].map(i=>Math.round(rgb.reduce((sum,c)=>sum+c[i],0)/rgb.length));
+  return '#'+mixed.map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+function activityGradient(tasks,h){
+  let colors=[];
+  for(let m=0;m<=60;m++){
+    let minute=h*60+m;
+    let active=tasks.filter(t=>t.time&&t.timeEnd&&
+      timeMinutes(t.time)<minute&&timeMinutes(t.timeEnd)>minute);
+    colors.push(active.length?mixColors(active.map(t=>t.color||'#3978e8')):'transparent');
+  }
+  let stops=colors.map((c,i)=>`${c} ${i/60*100}%`);
+  return `linear-gradient(to bottom,${stops.join(',')})`;
+}
 function render(){
   $('dateTitle').innerHTML=safe(dateLabel(selected)).replace(', ','<small>')+'</small>';
   renderTimeline();
@@ -344,26 +376,44 @@ function render(){
 function renderTimeline(){
   let shift=shiftFor(selected);
   $('shiftSummary').textContent=shift?shift.name:'';
-  let tasks=data.tasks.filter(t=>occurs(t,selected)).sort((a,b)=>a.time.localeCompare(b.time));
+  let tasks=data.tasks.filter(t=>occurs(t,selected)).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
   let timedSections=data.sections.filter(s=>s.time&&occursSection(s,selected));
+  let timedTasks=tasks.filter(t=>t.time);
+  let untimedTasks=tasks.filter(t=>!t.time);
   let html='';
+  if(untimedTasks.length){
+    html+=`<div class="hour-tasks" style="margin:0 0 10px">
+      <div class="muted" style="margin:5px 0">Senza orario</div>
+      ${untimedTasks.map(t=>{
+        let done=isChecked(t.id,selected);
+        return `<div class="task ${done?'done':''}">
+          <input type="checkbox" ${done?'checked':''} onchange="setChecked('${t.id}','${selected}',this.checked)">
+          <span class="task-name">${safe(t.name)}</span>
+          <button class="icon-btn" onclick="deleteTask('${t.id}')">×</button>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
   for(let h=0;h<24;h++){
     let start=shift?Number(shift.start.slice(0,2))+Number(shift.start.slice(3))/60:0;
     let end=shift?Number(shift.end.slice(0,2))+Number(shift.end.slice(3))/60:0;
     let active=shift&&(start<end?(h>=start&&h<end):(h>=start||h<end));
-    let hourTasks=tasks.filter(t=>Number(t.time.slice(0,2))===h);
+    let hourTasks=timedTasks.filter(t=>Number(t.time.slice(0,2))===h);
     let hourSections=timedSections.filter(s=>Number(s.time.slice(0,2))===h);
+    let hourActivities=timedTasks.filter(t=>t.time&&t.timeEnd&&
+      timeMinutes(t.time)<(h+1)*60&&timeMinutes(t.timeEnd)>h*60);
     html+=`<div class="hour">
       <span class="hour-label">${String(h).padStart(2,'0')}:00</span>
       ${active?`<div class="shift-bg" style="background:${shift.color};border-color:${shift.color}"></div>`:''}
+      ${hourActivities.length?`<div class="activity-bg" style="background:${activityGradient(hourActivities,h)}"></div>`:''}
       ${active&&h===Math.floor(start)?`<span class="shift-label" style="color:${shift.color}">${safe(shift.name)} · ${shift.start}–${shift.end}</span>`:''}
       <div class="hour-tasks">
         ${hourTasks.map(t=>{
           let done=isChecked(t.id,selected);
-          return `<div class="task ${done?'done':''}">
+          return `<div class="task activity-task ${done?'done':''}" style="border-left:3px solid ${t.color||'#3978e8'}">
             <input type="checkbox" ${done?'checked':''} onchange="setChecked('${t.id}','${selected}',this.checked)">
             <span class="task-name">${safe(t.name)}</span>
-            <span class="muted">${t.time}</span>
+            <span class="muted">${t.time}${t.timeEnd?'–'+t.timeEnd:''}</span>
             <button class="icon-btn" onclick="deleteTask('${t.id}')">×</button>
           </div>`;
         }).join('')}
@@ -400,15 +450,16 @@ function renderSections(){
         </div>`;
       }).join('')}
       <div class="item-add">
-        <input id="new_${s.id}" placeholder="Aggiungi elemento">
+        <input id="new_${s.id}" placeholder="Aggiungi voce">
         <button class="secondary" onclick="addItem('${s.id}')">+</button>
       </div>
     </div>`;
-  }).join(''):'<div class="empty">Nessuna attività per questo giorno.</div>';
+  }).join(''):'<div class="empty">Nessuna lista per questo giorno.</div>';
 }
 function openTaskForm(){
   showForm('taskForm');
-  $('taskName').value='';$('taskTime').value='09:00';
+  $('taskName').value='';$('taskTime').value='';
+  $('taskTimeEnd').value='';$('taskColor').value='#3978e8';
   $('taskFreq').value='once';$('taskEveryBox').style.display='none';
   $('taskStart').value=selected;$('taskEnd').value='';
   $('taskName').focus();
@@ -419,9 +470,12 @@ function toggleCustom(type){
 function saveTask(){
   let name=$('taskName').value.trim();
   if(!name)return alert('Inserisci il nome dell’attività.');
+  let time=$('taskTime').value,timeEnd=$('taskTimeEnd').value;
+  if(timeEnd&&!time)return alert('Inserisci anche l’ora di inizio.');
+  if(time&&timeEnd&&timeEnd<=time)return alert('L’ora di fine deve essere successiva all’ora di inizio.');
   let start=$('taskStart').value||selected,end=$('taskEnd').value;
   if(end&&end<start)return alert('La data finale precede quella iniziale.');
-  data.tasks.push({id:uid(),name,time:$('taskTime').value||'09:00',
+  data.tasks.push({id:uid(),name,time,timeEnd,color:$('taskColor').value,
     freq:$('taskFreq').value,every:Number($('taskEvery').value)||2,start,end});
   persist();closeForms();render();
 }
@@ -452,7 +506,7 @@ function renderSectionDraft(){
 function removeSectionDraftItem(i){sectionDraft.splice(i,1);renderSectionDraft()}
 function saveSection(){
   let name=$('sectionName').value.trim();
-  if(!name)return alert('Inserisci il nome dell’attività.');
+  if(!name)return alert('Inserisci il nome della lista.');
   let start=$('sectionStart').value||selected,end=$('sectionEnd').value;
   if(end&&end<start)return alert('La data finale precede quella iniziale.');
   let id=uid();
@@ -493,7 +547,7 @@ function deleteItem(sid,iid){
   persist();renderSections();$('items_'+sid).style.display='block';
 }
 function deleteSection(id){
-  if(!confirm('Eliminare questa attività e il suo contenuto?'))return;
+  if(!confirm('Eliminare questa lista e il suo contenuto?'))return;
   data.sections=data.sections.filter(s=>s.id!==id);
   delete data.items[id];persist();renderSections();
 }
