@@ -2,1441 +2,536 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#f2f2f7">
-
-<title>Diario</title>
-
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f5f6f8">
+<title>Il mio diario</title>
 <style>
-* {
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
-}
-
-body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display",
-                 "SF Pro Text", Helvetica, Arial, sans-serif;
-    background: #f2f2f7;
-    color: #1c1c1e;
-}
-
-button,
-input,
-textarea,
-select {
-    font: inherit;
-}
-
-button {
-    border: 0;
-    background: none;
-}
-
-.app {
-    max-width: 700px;
-    margin: 0 auto;
-    min-height: 100vh;
-    padding-bottom: 40px;
-}
-
-/* HEADER */
-
-.header {
-    padding: 58px 20px 15px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.header h1 {
-    margin: 0;
-    font-size: 34px;
-    font-weight: 700;
-    letter-spacing: -1px;
-}
-
-.header button {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    background: #ffcc00;
-    font-size: 28px;
-    line-height: 42px;
-    font-weight: 400;
-}
-
-/* SEARCH */
-
-.search {
-    margin: 0 16px 18px;
-    background: rgba(118,118,128,.12);
-    border-radius: 12px;
-    padding: 10px 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.search span {
-    color: #8e8e93;
-    font-size: 18px;
-}
-
-.search input {
-    width: 100%;
-    border: 0;
-    outline: 0;
-    background: transparent;
-    font-size: 17px;
-}
-
-/* NOTES LIST */
-
-.notes {
-    padding: 0 16px;
-}
-
-.note-card {
-    background: white;
-    border-radius: 17px;
-    padding: 17px;
-    margin-bottom: 12px;
-    box-shadow: 0 1px 2px rgba(0,0,0,.05);
-    cursor: pointer;
-}
-
-.note-card:active {
-    transform: scale(.985);
-}
-
-.note-card-top {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-}
-
-.note-title {
-    font-size: 20px;
-    font-weight: 650;
-}
-
-.note-date {
-    color: #8e8e93;
-    font-size: 13px;
-    white-space: nowrap;
-}
-
-.note-preview {
-    margin-top: 8px;
-    color: #636366;
-    font-size: 15px;
-    line-height: 1.35;
-}
-
-.note-stats {
-    margin-top: 12px;
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.badge {
-    background: #f2f2f7;
-    border-radius: 8px;
-    padding: 5px 8px;
-    color: #636366;
-    font-size: 12px;
-}
-
-/* EMPTY */
-
-.empty {
-    text-align: center;
-    color: #8e8e93;
-    padding: 80px 30px;
-}
-
-.empty-icon {
-    font-size: 50px;
-    margin-bottom: 15px;
-}
-
-/* EDITOR */
-
-.editor {
-    display: none;
-    min-height: 100vh;
-}
-
-.editor.active {
-    display: block;
-}
-
-.editor-header {
-    padding: 52px 16px 12px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.back {
-    color: #007aff;
-    font-size: 17px;
-}
-
-.editor-header .done {
-    color: #007aff;
-    font-weight: 600;
-}
-
-.editor-content {
-    padding: 10px 18px 50px;
-}
-
-.title-input {
-    width: 100%;
-    border: 0;
-    outline: 0;
-    background: transparent;
-    font-size: 30px;
-    font-weight: 700;
-    letter-spacing: -.7px;
-    margin-bottom: 8px;
-}
-
-.body-input {
-    width: 100%;
-    min-height: 110px;
-    resize: none;
-    border: 0;
-    outline: 0;
-    background: transparent;
-    font-size: 17px;
-    line-height: 1.45;
-}
-
-/* ELEMENTS */
-
-.elements-title {
-    margin-top: 22px;
-    margin-bottom: 10px;
-    color: #8e8e93;
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: .4px;
-}
-
-.element {
-    background: white;
-    border-radius: 16px;
-    padding: 15px;
-    margin-bottom: 10px;
-}
-
-.element-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.element-name {
-    font-size: 17px;
-    font-weight: 600;
-}
-
-.element-type {
-    color: #8e8e93;
-    font-size: 12px;
-    margin-top: 3px;
-}
-
-.delete-element {
-    color: #ff3b30;
-    font-size: 14px;
-}
-
-/* CHECKBOX */
-
-.check-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-top: 13px;
-}
-
-.checkbox {
-    width: 25px;
-    height: 25px;
-    border: 2px solid #c7c7cc;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-}
-
-.checkbox.checked {
-    background: #34c759;
-    border-color: #34c759;
-    color: white;
-}
-
-.check-text.done-text {
-    text-decoration: line-through;
-    color: #8e8e93;
-}
-
-/* COUNTER */
-
-.counter-box {
-    margin-top: 13px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.counter-value {
-    font-size: 34px;
-    font-weight: 700;
-}
-
-.counter-buttons {
-    display: flex;
-    gap: 8px;
-}
-
-.counter-buttons button {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    background: #f2f2f7;
-    font-size: 24px;
-}
-
-.counter-buttons button:last-child {
-    background: #ffcc00;
-}
-
-/* TIMER */
-
-.timer-box {
-    margin-top: 14px;
-    background: #f2f2f7;
-    border-radius: 12px;
-    padding: 13px;
-}
-
-.timer-value {
-    font-size: 26px;
-    font-weight: 650;
-}
-
-.timer-sub {
-    margin-top: 3px;
-    color: #8e8e93;
-    font-size: 13px;
-}
-
-.timer-action {
-    margin-top: 10px;
-    width: 100%;
-    background: #ffcc00;
-    padding: 10px;
-    border-radius: 10px;
-    font-weight: 600;
-}
-
-/* ADD */
-
-.add-element {
-    margin-top: 18px;
-    width: 100%;
-    background: white;
-    border-radius: 15px;
-    padding: 16px;
-    color: #007aff;
-    text-align: left;
-    font-weight: 600;
-}
-
-/* MODAL */
-
-.modal {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.35);
-    z-index: 10;
-    align-items: flex-end;
-    justify-content: center;
-}
-
-.modal.active {
-    display: flex;
-}
-
-.sheet {
-    width: 100%;
-    max-width: 700px;
-    background: #f2f2f7;
-    border-radius: 22px 22px 0 0;
-    padding: 15px 16px calc(20px + env(safe-area-inset-bottom));
-}
-
-.sheet h2 {
-    margin: 5px 0 15px;
-    font-size: 21px;
-}
-
-.form-input {
-    width: 100%;
-    border: 0;
-    background: white;
-    border-radius: 12px;
-    padding: 13px;
-    outline: 0;
-    margin-bottom: 10px;
-}
-
-.type-button {
-    width: 100%;
-    background: white;
-    border-radius: 12px;
-    padding: 14px;
-    text-align: left;
-    margin-bottom: 8px;
-    display: flex;
-    justify-content: space-between;
-}
-
-.cancel {
-    width: 100%;
-    background: #e5e5ea;
-    border-radius: 12px;
-    padding: 14px;
-    margin-top: 7px;
-    font-weight: 600;
-}
-
-@media (min-width: 700px) {
-    body {
-        background: #e5e5ea;
-    }
-
-    .app {
-        background: #f2f2f7;
-    }
-}
+*{box-sizing:border-box}
+body{margin:0;background:#f5f6f8;color:#202735;font:15px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer}
+header{background:white;padding:18px 16px 12px;position:sticky;top:0;z-index:5;border-bottom:1px solid #e8eaf0}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+h1{font-size:22px;margin:0}
+.date-nav{display:flex;align-items:center;justify-content:space-between;margin-top:18px;gap:8px}
+.date-nav button,.secondary{border:0;background:#f0f2f6;border-radius:10px;padding:10px 13px;color:#30394a}
+#dateTitle{text-align:center;font-weight:700}
+#dateTitle small{display:block;font-weight:400;color:#7b8494;margin-top:4px}
+main{max-width:680px;margin:auto;padding:14px 12px 100px}
+.card{background:white;border-radius:15px;padding:15px;margin-bottom:13px;box-shadow:0 2px 8px #20273506}
+.card-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}
+h2{font-size:16px;margin:0}
+.add{border:0;background:#e9efff;color:#285bc5;padding:8px 11px;border-radius:9px;font-weight:600}
+.muted{color:#8992a1;font-size:13px}
+.timeline{position:relative}
+.hour{height:52px;position:relative;border-top:1px solid #e9ecf1;padding-left:51px}
+.hour-label{position:absolute;left:0;top:-8px;font-size:11px;color:#8992a1;background:white;padding-right:7px}
+.shift-bg{position:absolute;left:51px;right:0;height:51px;opacity:.20;border-left:4px solid}
+.shift-label{position:absolute;left:59px;top:4px;font-size:11px;font-weight:700;opacity:.9}
+.task-on-hour{position:absolute;left:58px;right:4px;top:19px;z-index:2}
+.task{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #f0f1f4}
+.task:last-child{border-bottom:0}
+.task input[type=checkbox],.item input{width:18px;height:18px;margin:2px 0 0;accent-color:#3978e8;flex-shrink:0}
+.task-text{flex:1;min-width:0}
+.task-name{overflow-wrap:anywhere}
+.done .task-name{text-decoration:line-through;color:#9ba2ad}
+.task-time{font-size:12px;color:#8992a1;margin-top:3px}
+.icon-btn{border:0;background:transparent;color:#8992a1;padding:2px 5px;font-size:18px}
+.section-row{display:flex;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid #f0f1f4}
+.section-row:last-child{border-bottom:0}
+.section-open{flex:1;text-align:left;border:0;background:transparent;color:#202735;padding:0;min-width:0}
+.section-name{font-weight:600}
+.section-info{font-size:12px;color:#8992a1;margin-top:4px}
+.items{padding:2px 0 8px 12px}
+.item{display:flex;align-items:flex-start;gap:9px;padding:8px 0}
+.item span{flex:1;overflow-wrap:anywhere}
+.item.checked span{text-decoration:line-through;color:#9ba2ad}
+.item-add{display:flex;gap:7px;margin-top:8px}
+.item-add input{flex:1;min-width:0}
+input,select{border:1px solid #dfe3ea;border-radius:9px;padding:11px;background:white;color:#202735;width:100%;min-width:0}
+label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
+.form{display:none;border-top:1px solid #edf0f4;padding-top:12px;margin-top:12px}
+.form.show{display:block}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.full{grid-column:1/-1}
+.primary{border:0;background:#3978e8;color:white;padding:12px 15px;border-radius:10px;font-weight:600;width:100%;margin-top:14px}
+.cancel{border:0;background:transparent;color:#737d8c;padding:10px;margin-top:4px;width:100%}
+.empty{font-size:13px;color:#8992a1;padding:8px 0}
+.bottom{position:fixed;bottom:0;left:0;right:0;background:#ffffffed;border-top:1px solid #e8eaf0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));display:flex;justify-content:center;gap:8px;z-index:6}
+.bottom button{flex:1;max-width:220px;border:0;background:#f0f2f6;border-radius:10px;padding:11px 5px;color:#30394a}
+.bottom button.active{background:#3978e8;color:white}
+.page{display:none}
+.page.active{display:block}
+.shift-row{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid #edf0f4}
+.shift-row:last-child{border:0}
+.shift-row input[type=color]{width:38px;height:38px;padding:3px}
+.shift-row .shift-name{flex:1;min-width:0}
+.shift-row .shift-name strong{display:block}
+.shift-row .shift-name small{color:#8992a1}
+.danger{color:#d34b54}
+@media(max-width:390px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.date-nav button{padding:9px}.hour{padding-left:44px}.shift-bg{left:44px}.task-on-hour{left:51px}}
 </style>
 </head>
-
 <body>
 
-<div class="app">
+<header>
+  <div class="top">
+    <h1>Il mio diario</h1>
+    <button class="secondary" onclick="goToday()">Oggi</button>
+  </div>
+  <div class="date-nav">
+    <button onclick="moveDay(-1)">‹</button>
+    <div id="dateTitle"></div>
+    <button onclick="moveDay(1)">›</button>
+  </div>
+</header>
 
-    <!-- HOME -->
-    <div id="home">
+<main>
+  <div class="page active" id="diaryPage">
+    <section class="card">
+      <div class="card-head">
+        <h2>La mia giornata</h2>
+        <span class="muted" id="shiftSummary"></span>
+      </div>
+      <div class="timeline" id="timeline"></div>
+    </section>
 
-        <div class="header">
-            <h1>Diario</h1>
-            <button onclick="newNote()">+</button>
+    <section class="card">
+      <div class="card-head">
+        <h2>Attività</h2>
+        <button class="add" onclick="openTaskForm()">+ Task</button>
+      </div>
+      <div id="tasks"></div>
+      <div id="taskForm" class="form">
+        <div class="grid">
+          <div class="full">
+            <label>Nome dell'attività</label>
+            <input id="taskName" placeholder="Es. Fare attività fisica">
+          </div>
+          <div>
+            <label>Ora preferita</label>
+            <input id="taskTime" type="time" value="09:00">
+          </div>
+          <div>
+            <label>Ripetizione</label>
+            <select id="taskFreq" onchange="toggleCustom('task')">
+              <option value="once">Solo questo giorno</option>
+              <option value="daily">Tutti i giorni</option>
+              <option value="every">Ogni N giorni</option>
+              <option value="weekly">Ogni settimana</option>
+              <option value="monthly">Ogni mese</option>
+            </select>
+          </div>
+          <div id="taskEveryBox" style="display:none">
+            <label>Ogni quanti giorni</label>
+            <input id="taskEvery" type="number" min="1" value="2">
+          </div>
+          <div>
+            <label>Inizio</label>
+            <input id="taskStart" type="date">
+          </div>
+          <div>
+            <label>Fine (facoltativa)</label>
+            <input id="taskEnd" type="date">
+          </div>
         </div>
+        <button class="primary" onclick="saveTask()">Salva attività</button>
+        <button class="cancel" onclick="closeForms()">Annulla</button>
+      </div>
+    </section>
 
-        <div class="search">
-            <span>⌕</span>
-            <input id="searchInput"
-                   placeholder="Cerca"
-                   oninput="renderNotes()">
+    <section class="card">
+      <div class="card-head">
+        <h2>Le mie sezioni</h2>
+        <button class="add" onclick="openSectionForm()">+ Sezione</button>
+      </div>
+      <div id="sections"></div>
+      <div id="sectionForm" class="form">
+        <label>Nome della sezione</label>
+        <input id="sectionName" placeholder="Es. Spesa">
+        <label>Ripetizione</label>
+        <select id="sectionFreq" onchange="toggleCustom('section')">
+          <option value="once">Solo questo giorno</option>
+          <option value="daily">Tutti i giorni</option>
+          <option value="every">Ogni N giorni</option>
+          <option value="weekly">Ogni settimana</option>
+          <option value="monthly">Ogni mese</option>
+        </select>
+        <div id="sectionEveryBox" style="display:none">
+          <label>Ogni quanti giorni</label>
+          <input id="sectionEvery" type="number" min="1" value="2">
         </div>
-
-        <div id="notesList" class="notes"></div>
-
-    </div>
-
-
-    <!-- EDITOR -->
-    <div id="editor" class="editor">
-
-        <div class="editor-header">
-            <button class="back" onclick="closeEditor()">‹ Diario</button>
-            <button class="done" onclick="saveCurrentNote()">Fine</button>
+        <div class="grid">
+          <div>
+            <label>Inizio</label>
+            <input id="sectionStart" type="date">
+          </div>
+          <div>
+            <label>Fine (facoltativa)</label>
+            <input id="sectionEnd" type="date">
+          </div>
         </div>
+        <button class="primary" onclick="saveSection()">Crea sezione</button>
+        <button class="cancel" onclick="closeForms()">Annulla</button>
+      </div>
+    </section>
+  </div>
 
-        <div class="editor-content">
-
-            <input
-                id="noteTitle"
-                class="title-input"
-                placeholder="Titolo">
-
-            <textarea
-                id="noteBody"
-                class="body-input"
-                placeholder="Scrivi qualcosa..."></textarea>
-
-            <div class="elements-title">
-                Elementi
-            </div>
-
-            <div id="elementsList"></div>
-
-            <button class="add-element" onclick="openElementModal()">
-                ＋ Aggiungi elemento
-            </button>
-
+  <div class="page" id="shiftsPage">
+    <section class="card">
+      <div class="card-head">
+        <h2>I miei turni</h2>
+        <button class="add" onclick="openShiftForm()">+ Turno</button>
+      </div>
+      <p class="muted">Crea i tipi di turno con orari e colori. Poi componi la tua sequenza.</p>
+      <div id="shiftList"></div>
+      <div id="shiftForm" class="form">
+        <label>Nome del turno</label>
+        <input id="shiftName" placeholder="Es. Mattina">
+        <div class="grid">
+          <div>
+            <label>Inizio</label>
+            <input id="shiftStart" type="time" value="06:00">
+          </div>
+          <div>
+            <label>Fine</label>
+            <input id="shiftEnd" type="time" value="14:00">
+          </div>
+          <div class="full">
+            <label>Colore</label>
+            <input id="shiftColor" type="color" value="#e7b83f">
+          </div>
         </div>
+        <button class="primary" onclick="saveShift()">Salva turno</button>
+        <button class="cancel" onclick="closeForms()">Annulla</button>
+      </div>
+    </section>
 
-    </div>
+    <section class="card">
+      <div class="card-head"><h2>La mia rotazione</h2></div>
+      <p class="muted">Inserisci i turni nell'ordine in cui li lavori. La sequenza verrà ripetuta automaticamente.</p>
+      <div class="grid">
+        <div class="full">
+          <label>Data del primo turno</label>
+          <input id="cycleStart" type="date">
+        </div>
+        <div class="full">
+          <label>Turno del primo giorno</label>
+          <select id="cycleChoice"></select>
+        </div>
+      </div>
+      <button class="secondary" style="width:100%;margin-top:8px" onclick="addCycleDay()">+ Aggiungi giorno alla sequenza</button>
+      <div id="cycleList" style="margin-top:10px"></div>
+      <div class="grid">
+        <div>
+          <label>Numero di ripetizioni</label>
+          <input id="cycleRepeats" type="number" min="1" value="20">
+        </div>
+      </div>
+      <button class="primary" onclick="saveCycle()">Applica rotazione</button>
+      <button class="cancel danger" onclick="clearCycle()">Rimuovi rotazione</button>
+      <p class="muted" id="cycleInfo"></p>
+    </section>
+  </div>
 
-</div>
+  <div class="page" id="calendarPage">
+    <section class="card">
+      <div class="card-head"><h2>Vai a una data</h2></div>
+      <label>Seleziona il giorno</label>
+      <input type="date" id="calendarDate" onchange="selectDate(this.value)">
+      <button class="primary" onclick="goToday()">Torna a oggi</button>
+    </section>
+  </div>
+</main>
 
-
-<!-- ELEMENT MODAL -->
-
-<div id="elementModal" class="modal">
-
-    <div class="sheet">
-
-        <h2>Nuovo elemento</h2>
-
-        <input
-            id="elementName"
-            class="form-input"
-            placeholder="Nome, es. Sigarette">
-
-        <button class="type-button"
-                onclick="addElement('check')">
-            <span>☑️ Lista spuntabile</span>
-            <span>›</span>
-        </button>
-
-        <button class="type-button"
-                onclick="addElement('counter')">
-            <span>🔢 Contatore</span>
-            <span>›</span>
-        </button>
-
-        <button class="type-button"
-                onclick="addElement('timer')">
-            <span>⏱️ Timer dall'ultima registrazione</span>
-            <span>›</span>
-        </button>
-
-        <button class="type-button"
-                onclick="addElement('counterTimer')">
-            <span>🚬 Contatore + Timer</span>
-            <span>›</span>
-        </button>
-
-        <button class="cancel" onclick="closeElementModal()">
-            Annulla
-        </button>
-
-    </div>
-
-</div>
-
+<nav class="bottom">
+  <button class="active" onclick="showPage('diaryPage',this)">Diario</button>
+  <button onclick="showPage('shiftsPage',this)">Turni</button>
+  <button onclick="showPage('calendarPage',this)">Calendario</button>
+</nav>
 
 <script>
+const $=id=>document.getElementById(id);
+const today=()=>dateStr(new Date());
+const dateStr=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const parseDate=s=>{let [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const addDays=(s,n)=>{let d=parseDate(s);d.setDate(d.getDate()+n);return dateStr(d)};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const read=(k,f)=>{try{return JSON.parse(localStorage.getItem('diario_'+k))??f}catch{return f}};
+const write=(k,v)=>localStorage.setItem('diario_'+k,JSON.stringify(v));
 
-/* =========================
-   DATABASE LOCALE
-========================= */
+let data={
+  shifts:read('shifts',[]),
+  cycle:read('cycle',null),
+  tasks:read('tasks',[]),
+  sections:read('sections',[]),
+  checks:read('checks',{}),
+  items:read('items',{})
+};
+let selected=today(),cycleDraft=[];
 
-let notes = JSON.parse(localStorage.getItem("diario_notes")) || [];
-
-let currentNoteId = null;
-
-
-/* =========================
-   UTILS
-========================= */
-
-function saveDatabase() {
-    localStorage.setItem("diario_notes", JSON.stringify(notes));
+function persist(){
+  for(let k in data)write(k,data[k]);
 }
-
-function generateId() {
-    return Date.now().toString() + Math.random().toString(16).slice(2);
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  $(id).classList.add('active');
+  document.querySelectorAll('.bottom button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(id==='shiftsPage')renderShifts();
 }
-
-function formatDate(dateString) {
-
-    const d = new Date(dateString);
-
-    return d.toLocaleDateString("it-IT", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric"
-    });
+function moveDay(n){selected=addDays(selected,n);render()}
+function goToday(){selected=today();render();showPage('diaryPage',document.querySelector('.bottom button'))}
+function selectDate(s){if(s){selected=s;render();showPage('diaryPage',document.querySelector('.bottom button'))}}
+function dateLabel(s){
+  return parseDate(s).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 }
-
-
-/* =========================
-   HOME
-========================= */
-
-function renderNotes() {
-
-    const container = document.getElementById("notesList");
-
-    const search =
-        document.getElementById("searchInput").value
-        .toLowerCase();
-
-    const filtered = notes.filter(note => {
-
-        return (
-            note.title.toLowerCase().includes(search) ||
-            note.body.toLowerCase().includes(search)
-        );
-
-    });
-
-    if (filtered.length === 0) {
-
-        container.innerHTML = `
-            <div class="empty">
-                <div class="empty-icon">📝</div>
-                <div>Nessuna nota</div>
-                <div style="font-size:14px;margin-top:6px;">
-                    Tocca + per crearne una
-                </div>
-            </div>
-        `;
-
-        return;
+function safe(s){
+  return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function shiftFor(day){
+  let c=data.cycle;
+  if(!c||!c.days.length||day<c.start)return null;
+  let diff=Math.round((parseDate(day)-parseDate(c.start))/86400000);
+  let index=Math.floor(diff%c.days.length);
+  if(diff>=c.days.length*c.repeats)return null;
+  let id=c.days[index];
+  return data.shifts.find(s=>s.id===id)||null;
+}
+function occurs(obj,day){
+  if(day<obj.start||(obj.end&&day>obj.end))return false;
+  let diff=Math.round((parseDate(day)-parseDate(obj.start))/86400000);
+  if(obj.freq==='once')return day===obj.start;
+  if(obj.freq==='daily')return true;
+  if(obj.freq==='every')return diff%Math.max(1,Number(obj.every)||1)===0;
+  if(obj.freq==='weekly')return diff%7===0;
+  if(obj.freq==='monthly'){
+    let a=parseDate(obj.start),b=parseDate(day);
+    return a.getDate()===b.getDate();
+  }
+  return false;
+}
+function checkKey(type,id,day){return type+'_'+id+'_'+day}
+function isChecked(type,id,day){return !!data.checks[checkKey(type,id,day)]}
+function setChecked(type,id,day,val){
+  let k=checkKey(type,id,day);
+  if(val)data.checks[k]=true;else delete data.checks[k];
+  persist();render();
+}
+function render(){
+  $('dateTitle').innerHTML=safe(dateLabel(selected)).replace(/, /,'<small>').replace(/$/,'</small>');
+  $('calendarDate').value=selected;
+  renderTimeline();renderTasks();renderSections();
+}
+function renderTimeline(){
+  let shift=shiftFor(selected);
+  $('shiftSummary').textContent=shift?shift.name:'';
+  let html='';
+  for(let h=0;h<24;h++){
+    let hh=String(h).padStart(2,'0')+':00';
+    let active=false;
+    if(shift){
+      let start=Number(shift.start.split(':')[0])+Number(shift.start.split(':')[1])/60;
+      let end=Number(shift.end.split(':')[0])+Number(shift.end.split(':')[1])/60;
+      active=start<end?(h>=start&&h<end):(h>=start||h<end);
     }
-
-    container.innerHTML = filtered.map(note => {
-
-        const checks =
-            note.elements.filter(e => e.type === "check");
-
-        const completed =
-            checks.filter(e => e.completed).length;
-
-        const counters =
-            note.elements.filter(
-                e => e.type === "counter" ||
-                     e.type === "counterTimer"
-            );
-
-        return `
-            <div class="note-card"
-                 onclick="openNote('${note.id}')">
-
-                <div class="note-card-top">
-
-                    <div class="note-title">
-                        ${escapeHTML(note.title || "Senza titolo")}
-                    </div>
-
-                    <div class="note-date">
-                        ${formatDate(note.updatedAt)}
-                    </div>
-
-                </div>
-
-                ${
-                    note.body
-                    ?
-                    `<div class="note-preview">
-                        ${escapeHTML(note.body.substring(0,120))}
-                    </div>`
-                    : ""
-                }
-
-                <div class="note-stats">
-
-                    ${
-                        checks.length
-                        ?
-                        `<div class="badge">
-                            ☑ ${completed}/${checks.length}
-                        </div>`
-                        : ""
-                    }
-
-                    ${
-                        counters.map(c => {
-
-                            return `
-                            <div class="badge">
-                                ${escapeHTML(c.name)}: ${c.value}
-                            </div>
-                            `;
-
-                        }).join("")
-                    }
-
-                </div>
-
-            </div>
-        `;
-
-    }).join("");
+    html+=`<div class="hour">
+      <span class="hour-label">${hh}</span>
+      ${active?`<div class="shift-bg" style="background:${shift.color};border-color:${shift.color}"></div>
+      ${h===Number(shift.start.split(':')[0])?`<span class="shift-label" style="color:${shift.color}">${safe(shift.name)} · ${shift.start}–${shift.end}</span>`:''}`:''}
+    </div>`;
+  }
+  $('timeline').innerHTML=html;
 }
-
-
-/* =========================
-   NUOVA NOTA
-========================= */
-
-function newNote() {
-
-    const note = {
-
-        id: generateId(),
-
-        title: "",
-
-        body: "",
-
-        createdAt: new Date().toISOString(),
-
-        updatedAt: new Date().toISOString(),
-
-        elements: []
-
-    };
-
-    notes.unshift(note);
-
-    saveDatabase();
-
-    openNote(note.id);
+function renderTasks(){
+  let tasks=data.tasks.filter(t=>occurs(t,selected)).sort((a,b)=>a.time.localeCompare(b.time));
+  $('tasks').innerHTML=tasks.length?tasks.map(t=>{
+    let done=isChecked('task',t.id,selected);
+    return `<div class="task ${done?'done':''}">
+      <input type="checkbox" ${done?'checked':''} onchange="setChecked('task','${t.id}','${selected}',this.checked)">
+      <div class="task-text">
+        <div class="task-name">${safe(t.name)}</div>
+        <div class="task-time">${safe(t.time)}${t.freq!=='once'?' · Ricorrente':''}</div>
+      </div>
+      <button class="icon-btn" onclick="deleteTask('${t.id}')" aria-label="Elimina">×</button>
+    </div>`;
+  }).join(''):'<div class="empty">Nessuna attività per questo giorno.</div>';
 }
-
-
-/* =========================
-   APRI NOTA
-========================= */
-
-function openNote(id) {
-
-    currentNoteId = id;
-
-    const note =
-        notes.find(n => n.id === id);
-
-    if (!note) return;
-
-    document.getElementById("home")
-        .style.display = "none";
-
-    document.getElementById("editor")
-        .classList.add("active");
-
-    document.getElementById("noteTitle")
-        .value = note.title;
-
-    document.getElementById("noteBody")
-        .value = note.body;
-
-    renderElements();
-}
-
-
-/* =========================
-   CHIUDI
-========================= */
-
-function closeEditor() {
-
-    saveCurrentNote();
-
-    document.getElementById("editor")
-        .classList.remove("active");
-
-    document.getElementById("home")
-        .style.display = "block";
-
-    renderNotes();
-}
-
-
-/* =========================
-   SALVA NOTA
-========================= */
-
-function saveCurrentNote() {
-
-    if (!currentNoteId) return;
-
-    const note =
-        notes.find(n => n.id === currentNoteId);
-
-    if (!note) return;
-
-    note.title =
-        document.getElementById("noteTitle").value;
-
-    note.body =
-        document.getElementById("noteBody").value;
-
-    note.updatedAt =
-        new Date().toISOString();
-
-    saveDatabase();
-}
-
-
-/* =========================
-   ELEMENTI
-========================= */
-
-function renderElements() {
-
-    const note =
-        notes.find(n => n.id === currentNoteId);
-
-    if (!note) return;
-
-    const container =
-        document.getElementById("elementsList");
-
-    container.innerHTML =
-        note.elements.map(element => {
-
-            if (element.type === "check") {
-
-                return renderCheck(element);
-
-            }
-
-            if (element.type === "counter") {
-
-                return renderCounter(element);
-
-            }
-
-            if (element.type === "timer") {
-
-                return renderTimer(element);
-
-            }
-
-            if (element.type === "counterTimer") {
-
-                return renderCounterTimer(element);
-
-            }
-
-            return "";
-
-        }).join("");
-}
-
-
-/* =========================
-   CHECKBOX
-========================= */
-
-function renderCheck(element) {
-
-    return `
-
-    <div class="element">
-
-        <div class="element-header">
-
-            <div>
-
-                <div class="element-name">
-                    ${escapeHTML(element.name)}
-                </div>
-
-                <div class="element-type">
-                    Lista spuntabile
-                </div>
-
-            </div>
-
-            <button class="delete-element"
-                    onclick="deleteElement('${element.id}')">
-                Elimina
-            </button>
-
-        </div>
-
-        <div class="check-row">
-
-            <div
-                class="checkbox ${element.completed ? "checked" : ""}"
-                onclick="toggleCheck('${element.id}')">
-
-                ${element.completed ? "✓" : ""}
-
-            </div>
-
-            <div class="check-text ${element.completed ? "done-text" : ""}">
-                ${escapeHTML(element.name)}
-            </div>
-
-        </div>
-
+function renderSections(){
+  let sections=data.sections.filter(s=>occurs(s,selected));
+  $('sections').innerHTML=sections.length?sections.map(s=>{
+    let list=data.items[s.id]||[];
+    let checked=list.filter(i=>i.done).length;
+    return `<div class="section-row">
+      <button class="section-open" onclick="toggleSection('${s.id}')">
+        <div class="section-name">${safe(s.name)}</div>
+        <div class="section-info">${checked}/${list.length} completati · Tocca per aprire</div>
+      </button>
+      <button class="icon-btn" onclick="deleteSection('${s.id}')" aria-label="Elimina sezione">×</button>
     </div>
-
-    `;
+    <div id="items_${s.id}" class="items" style="display:none">
+      ${list.map(i=>`<div class="item ${i.done?'checked':''}">
+        <input type="checkbox" ${i.done?'checked':''} onchange="toggleItem('${s.id}','${i.id}',this.checked)">
+        <span>${safe(i.text)}</span>
+        <button class="icon-btn" onclick="deleteItem('${s.id}','${i.id}')">×</button>
+      </div>`).join('')}
+      <div class="item-add">
+        <input id="new_${s.id}" placeholder="Aggiungi elemento">
+        <button class="add" onclick="addItem('${s.id}')">+</button>
+      </div>
+    </div>`;
+  }).join(''):'<div class="empty">Nessuna sezione per questo giorno.</div>';
 }
-
-
-/* =========================
-   CONTATORE
-========================= */
-
-function renderCounter(element) {
-
-    return `
-
-    <div class="element">
-
-        <div class="element-header">
-
-            <div>
-
-                <div class="element-name">
-                    ${escapeHTML(element.name)}
-                </div>
-
-                <div class="element-type">
-                    Contatore giornaliero
-                </div>
-
-            </div>
-
-            <button class="delete-element"
-                    onclick="deleteElement('${element.id}')">
-                Elimina
-            </button>
-
-        </div>
-
-        <div class="counter-box">
-
-            <div class="counter-value">
-                ${getTodayValue(element)}
-            </div>
-
-            <div class="counter-buttons">
-
-                <button onclick="changeCounter('${element.id}', -1)">
-                    −
-                </button>
-
-                <button onclick="changeCounter('${element.id}', 1)">
-                    +
-                </button>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    `;
+function closeForms(){
+  ['taskForm','sectionForm','shiftForm'].forEach(id=>$(id).classList.remove('show'));
 }
-
-
-/* =========================
-   TIMER
-========================= */
-
-function renderTimer(element) {
-
-    return `
-
-    <div class="element">
-
-        <div class="element-header">
-
-            <div>
-
-                <div class="element-name">
-                    ${escapeHTML(element.name)}
-                </div>
-
-                <div class="element-type">
-                    Timer dall'ultima registrazione
-                </div>
-
-            </div>
-
-            <button class="delete-element"
-                    onclick="deleteElement('${element.id}')">
-                Elimina
-            </button>
-
-        </div>
-
-        <div class="timer-box">
-
-            <div
-                class="timer-value"
-                id="timer-${element.id}">
-                ${getElapsed(element.lastTime)}
-            </div>
-
-            <div class="timer-sub">
-                Ultima registrazione:
-                ${element.lastTime
-                    ? new Date(element.lastTime).toLocaleString("it-IT")
-                    : "mai"}
-            </div>
-
-            <button class="timer-action"
-                    onclick="resetTimer('${element.id}')">
-
-                Registra adesso
-
-            </button>
-
-        </div>
-
-    </div>
-
-    `;
+function openTaskForm(){
+  closeForms();$('taskForm').classList.add('show');
+  $('taskName').value='';$('taskTime').value='09:00';
+  $('taskFreq').value='once';$('taskEveryBox').style.display='none';
+  $('taskEvery').value=2;$('taskStart').value=selected;$('taskEnd').value='';
+  $('taskName').focus();
 }
-
-
-/* =========================
-   COUNTER + TIMER
-========================= */
-
-function renderCounterTimer(element) {
-
-    return `
-
-    <div class="element">
-
-        <div class="element-header">
-
-            <div>
-
-                <div class="element-name">
-                    ${escapeHTML(element.name)}
-                </div>
-
-                <div class="element-type">
-                    Contatore giornaliero + timer
-                </div>
-
-            </div>
-
-            <button class="delete-element"
-                    onclick="deleteElement('${element.id}')">
-                Elimina
-            </button>
-
-        </div>
-
-        <div class="counter-box">
-
-            <div>
-
-                <div class="counter-value">
-                    ${getTodayValue(element)}
-                </div>
-
-                <div style="color:#8e8e93;font-size:12px;">
-                    oggi
-                </div>
-
-            </div>
-
-            <div class="counter-buttons">
-
-                <button onclick="changeCounterTimer('${element.id}', -1)">
-                    −
-                </button>
-
-                <button onclick="changeCounterTimer('${element.id}', 1)">
-                    +
-                </button>
-
-            </div>
-
-        </div>
-
-        <div class="timer-box">
-
-            <div
-                class="timer-value"
-                id="timer-${element.id}">
-                ${getElapsed(element.lastTime)}
-            </div>
-
-            <div class="timer-sub">
-
-                dall'ultima registrazione
-
-            </div>
-
-        </div>
-
-    </div>
-
-    `;
+function toggleCustom(type){
+  let freq=$(type+'Freq').value;
+  $(type+'EveryBox').style.display=freq==='every'?'block':'none';
 }
-
-
-/* =========================
-   CHECK
-========================= */
-
-function toggleCheck(id) {
-
-    const note =
-        notes.find(n => n.id === currentNoteId);
-
-    const element =
-        note.elements.find(e => e.id === id);
-
-    if (!element) return;
-
-    element.completed =
-        !element.completed;
-
-    saveDatabase();
-
-    renderElements();
+function saveTask(){
+  let name=$('taskName').value.trim();
+  if(!name)return alert('Inserisci il nome dell’attività.');
+  let start=$('taskStart').value||selected,end=$('taskEnd').value;
+  if(end&&end<start)return alert('La data finale precede quella iniziale.');
+  data.tasks.push({id:uid(),name,time:$('taskTime').value||'09:00',
+    freq:$('taskFreq').value,every:Number($('taskEvery').value)||2,start,end});
+  persist();closeForms();render();
 }
-
-
-/* =========================
-   CONTATORI
-========================= */
-
-function todayKey() {
-
-    const d = new Date();
-
-    return d.toISOString().split("T")[0];
-
+function deleteTask(id){
+  if(!confirm('Eliminare questa attività e la sua ricorrenza?'))return;
+  data.tasks=data.tasks.filter(t=>t.id!==id);persist();render();
 }
-
-
-function getTodayValue(element) {
-
-    const key = todayKey();
-
-    if (!element.history) {
-
-        element.history = {};
-
-    }
-
-    return element.history[key] || 0;
-
+function openSectionForm(){
+  closeForms();$('sectionForm').classList.add('show');
+  $('sectionName').value='';$('sectionFreq').value='once';
+  $('sectionEveryBox').style.display='none';
+  $('sectionEvery').value=2;$('sectionStart').value=selected;$('sectionEnd').value='';
+  $('sectionName').focus();
 }
-
-
-function changeCounter(id, amount) {
-
-    const note =
-        notes.find(n => n.id === currentNoteId);
-
-    const element =
-        note.elements.find(e => e.id === id);
-
-    if (!element) return;
-
-    const key = todayKey();
-
-    if (!element.history) {
-        element.history = {};
-    }
-
-    element.history[key] =
-        Math.max(
-            0,
-            (element.history[key] || 0) + amount
-        );
-
-    saveDatabase();
-
-    renderElements();
+function saveSection(){
+  let name=$('sectionName').value.trim();
+  if(!name)return alert('Inserisci il nome della sezione.');
+  let start=$('sectionStart').value||selected,end=$('sectionEnd').value;
+  if(end&&end<start)return alert('La data finale precede quella iniziale.');
+  let id=uid();
+  data.sections.push({id,name,freq:$('sectionFreq').value,
+    every:Number($('sectionEvery').value)||2,start,end});
+  data.items[id]=[];
+  persist();closeForms();render();
 }
-
-
-function changeCounterTimer(id, amount) {
-
-    const note =
-        notes.find(n => n.id === currentNoteId);
-
-    const element =
-        note.elements.find(e => e.id === id);
-
-    if (!element) return;
-
-    const key = todayKey();
-
-    if (!element.history) {
-        element.history = {};
-    }
-
-    element.history[key] =
-        Math.max(
-            0,
-            (element.history[key] || 0) + amount
-        );
-
-    if (amount > 0) {
-
-        element.lastTime =
-            new Date().toISOString();
-
-    }
-
-    saveDatabase();
-
-    renderElements();
+function toggleSection(id){
+  let el=$('items_'+id);
+  el.style.display=el.style.display==='none'?'block':'none';
 }
-
-
-/* =========================
-   TIMER
-========================= */
-
-function resetTimer(id) {
-
-    const note =
-        notes.find(n => n.id === currentNoteId);
-
-    const element =
-        note.elements.find(e => e.id === id);
-
-    if (!element) return;
-
-    element.lastTime =
-        new Date().toISOString();
-
-    saveDatabase();
-
-    renderElements();
+function addItem(id){
+  let el=$('new_'+id),text=el.value.trim();
+  if(!text)return;
+  if(!data.items[id])data.items[id]=[];
+  data.items[id].push({id:uid(),text,done:false});
+  persist();renderSections();
+  $('items_'+id).style.display='block';
+  $('new_'+id).focus();
 }
-
-
-function getElapsed(time) {
-
-    if (!time) {
-        return "Mai registrato";
-    }
-
-    const diff =
-        Math.max(
-            0,
-            Date.now() - new Date(time).getTime()
-        );
-
-    const seconds =
-        Math.floor(diff / 1000);
-
-    const days =
-        Math.floor(seconds / 86400);
-
-    const hours =
-        Math.floor((seconds % 86400) / 3600);
-
-    const minutes =
-        Math.floor((seconds % 3600) / 60);
-
-    const secs =
-        seconds % 60;
-
-    let result = "";
-
-    if (days > 0)
-        result += days + "g ";
-
-    if (hours > 0)
-        result += hours + "h ";
-
-    if (minutes > 0)
-        result += minutes + "m ";
-
-    result += secs + "s";
-
-    return result;
+function toggleItem(sid,iid,done){
+  let item=(data.items[sid]||[]).find(i=>i.id===iid);
+  if(item){item.done=done;persist();renderSections();$('items_'+sid).style.display='block';}
 }
-
-
-/* =========================
-   AGGIUNGI ELEMENTO
-========================= */
-
-function openElementModal() {
-
-    document
-        .getElementById("elementModal")
-        .classList.add("active");
-
-    document
-        .getElementById("elementName")
-        .value = "";
-
-    setTimeout(() => {
-
-        document
-            .getElementById("elementName")
-            .focus();
-
-    }, 150);
+function deleteItem(sid,iid){
+  data.items[sid]=(data.items[sid]||[]).filter(i=>i.id!==iid);
+  persist();renderSections();$('items_'+sid).style.display='block';
 }
-
-
-function closeElementModal() {
-
-    document
-        .getElementById("elementModal")
-        .classList.remove("active");
-
+function deleteSection(id){
+  if(!confirm('Eliminare questa sezione e il suo contenuto?'))return;
+  data.sections=data.sections.filter(s=>s.id!==id);
+  delete data.items[id];persist();renderSections();
 }
-
-
-function addElement(type) {
-
-    const name =
-        document
-        .getElementById("elementName")
-        .value
-        .trim();
-
-    if (!name) {
-
-        alert("Inserisci un nome.");
-
-        return;
-
-    }
-
-    const note =
-        notes.find(n => n.id === currentNoteId);
-
-    if (!note) return;
-
-    const element = {
-
-        id: generateId(),
-
-        name: name,
-
-        type: type,
-
-        completed: false,
-
-        value: 0,
-
-        history: {},
-
-        lastTime: null
-
-    };
-
-    note.elements.push(element);
-
-    note.updatedAt =
-        new Date().toISOString();
-
-    saveDatabase();
-
-    closeElementModal();
-
-    renderElements();
-
+function openShiftForm(){
+  closeForms();$('shiftForm').classList.add('show');
+  $('shiftName').value='';$('shiftStart').value='06:00';
+  $('shiftEnd').value='14:00';$('shiftColor').value='#e7b83f';
+  $('shiftName').focus();
 }
-
-
-/* =========================
-   DELETE
-========================= */
-
-function deleteElement(id) {
-
-    if (!confirm("Eliminare questo elemento?")) {
-        return;
-    }
-
-    const note =
-        notes.find(n => n.id === currentNoteId);
-
-    note.elements =
-        note.elements.filter(
-            e => e.id !== id
-        );
-
-    saveDatabase();
-
-    renderElements();
+function saveShift(){
+  let name=$('shiftName').value.trim();
+  if(!name)return alert('Inserisci il nome del turno.');
+  let s={id:uid(),name,start:$('shiftStart').value,end:$('shiftEnd').value,color:$('shiftColor').value};
+  if(s.start===s.end)return alert('Inizio e fine non possono coincidere.');
+  data.shifts.push(s);persist();closeForms();renderShifts();
 }
-
-
-/* =========================
-   ESCAPE HTML
-========================= */
-
-function escapeHTML(text) {
-
-    return String(text)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-
+function renderShifts(){
+  $('shiftList').innerHTML=data.shifts.length?data.shifts.map(s=>`
+    <div class="shift-row">
+      <input type="color" value="${s.color}" onchange="changeShiftColor('${s.id}',this.value)">
+      <div class="shift-name"><strong>${safe(s.name)}</strong><small>${s.start} – ${s.end}</small></div>
+      <button class="icon-btn" onclick="deleteShift('${s.id}')">×</button>
+    </div>`).join(''):'<div class="empty">Crea i tuoi tipi di turno.</div>';
+  $('cycleChoice').innerHTML=data.shifts.map(s=>`<option value="${s.id}">${safe(s.name)}</option>`).join('');
+  if(data.cycle){
+    cycleDraft=[...data.cycle.days];
+    $('cycleStart').value=data.cycle.start;
+    $('cycleRepeats').value=data.cycle.repeats;
+  }else{
+    cycleDraft=[];
+    $('cycleStart').value=selected;
+    $('cycleRepeats').value=20;
+  }
+  renderCycle();
 }
-
-
-/* =========================
-   TIMER LIVE
-========================= */
-
-setInterval(() => {
-
-    if (!currentNoteId) return;
-
-    const note =
-        notes.find(n => n.id === currentNoteId);
-
-    if (!note) return;
-
-    note.elements.forEach(element => {
-
-        if (
-            element.type === "timer" ||
-            element.type === "counterTimer"
-        ) {
-
-            const timer =
-                document.getElementById(
-                    "timer-" + element.id
-                );
-
-            if (timer) {
-
-                timer.textContent =
-                    getElapsed(element.lastTime);
-
-            }
-
-        }
-
-    });
-
-}, 1000);
-
-
-/* =========================
-   START
-========================= */
-
-renderNotes();
-
+function changeShiftColor(id,color){
+  let s=data.shifts.find(s=>s.id===id);
+  if(s)s.color=color;
+  persist();render();
+}
+function deleteShift(id){
+  if(data.cycle&&data.cycle.days.includes(id)){
+    return alert('Questo turno è nella rotazione. Rimuovi o modifica prima la rotazione.');
+  }
+  if(!confirm('Eliminare questo tipo di turno?'))return;
+  data.shifts=data.shifts.filter(s=>s.id!==id);
+  persist();renderShifts();
+}
+function addCycleDay(){
+  if(!data.shifts.length)return alert('Crea prima almeno un tipo di turno.');
+  cycleDraft.push($('cycleChoice').value);
+  renderCycle();
+}
+function renderCycle(){
+  $('cycleList').innerHTML=cycleDraft.map((id,i)=>{
+    let s=data.shifts.find(s=>s.id===id);
+    return `<div class="shift-row">
+      <span style="color:#8992a1;width:20px">${i+1}.</span>
+      <div class="shift-name"><strong>${safe(s?s.name:'Turno eliminato')}</strong></div>
+      <button class="icon-btn" onclick="removeCycleDay(${i})">×</button>
+    </div>`;
+  }).join('');
+  $('cycleInfo').textContent=cycleDraft.length?
+    `Sequenza: ${cycleDraft.length} giorni · ${cycleDraft.length*(Number($('cycleRepeats').value)||1)} giorni totali`:
+    'La sequenza non è ancora impostata.';
+}
+function removeCycleDay(i){cycleDraft.splice(i,1);renderCycle()}
+function saveCycle(){
+  let start=$('cycleStart').value||selected;
+  let repeats=Number($('cycleRepeats').value);
+  if(!cycleDraft.length)return alert('Aggiungi almeno un turno alla sequenza.');
+  if(!repeats||repeats<1)return alert('Inserisci un numero valido di ripetizioni.');
+  data.cycle={start,days:[...cycleDraft],repeats};
+  persist();renderShifts();render();
+  alert('Rotazione salvata.');
+}
+function clearCycle(){
+  if(!confirm('Rimuovere la rotazione dei turni?'))return;
+  data.cycle=null;cycleDraft=[];persist();renderShifts();render();
+}
+$('cycleRepeats').addEventListener('input',renderCycle);
+render();
 </script>
-
 </body>
 </html>
