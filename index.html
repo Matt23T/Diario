@@ -11,13 +11,13 @@ body{margin:0;background:#f5f6f8;color:#202735;font:15px -apple-system,BlinkMacS
 button,input,select{font:inherit}
 button{cursor:pointer}
 header{background:white;padding:18px 16px 14px;position:sticky;top:0;z-index:5;border-bottom:1px solid #e8eaf0}
-.top{display:flex;justify-content:flex-end;align-items:center}
-.today-btn{border:0;background:#f0f2f6;border-radius:10px;padding:9px 14px;color:#30394a}
+.top{display:flex;justify-content:flex-end;align-items:center;gap:8px}
+.today-btn,.settings-btn{border:0;background:#f0f2f6;border-radius:10px;padding:9px 14px;color:#30394a}
+.settings-btn{font-size:19px;padding:6px 11px}
 .date-nav{display:flex;align-items:center;justify-content:space-between;margin-top:18px}
 .date-nav button{border:0;background:#f0f2f6;border-radius:10px;padding:9px 14px;color:#30394a}
 #dateTitle{font-weight:700;text-align:center;cursor:pointer}
 #dateTitle small{display:block;font-weight:400;color:#8992a1;margin-top:4px}
-#datePicker{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 main{max-width:680px;margin:auto;padding:14px 12px 110px}
 .card{background:white;border-radius:15px;padding:15px;margin-bottom:13px;box-shadow:0 2px 8px #20273506}
 .card-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}
@@ -70,6 +70,24 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
 .item-add{display:flex;gap:7px;margin-top:8px}
 .item-add input{flex:1}
 .danger{color:#d34b54}
+.overlay{display:none;position:fixed;inset:0;background:#20273555;z-index:20;align-items:flex-start;justify-content:center;padding:90px 18px 20px}
+.overlay.show{display:flex}
+.popup{background:white;border-radius:17px;width:100%;max-width:360px;padding:16px;box-shadow:0 8px 30px #20273525}
+.popup-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}
+.popup-head h2{font-size:17px}
+.close-btn{border:0;background:#f0f2f6;border-radius:50%;width:32px;height:32px;color:#626d7e;font-size:20px}
+.calendar-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.calendar-nav button{border:0;background:#f0f2f6;border-radius:9px;padding:7px 12px;color:#30394a}
+.calendar-month{text-transform:capitalize;font-weight:600}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}
+.calendar-weekday{font-size:11px;color:#8992a1;padding:5px 0}
+.calendar-day{height:42px;border:1px solid transparent;border-radius:10px;background:#f5f6f8;color:#30394a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px}
+.calendar-day.other{opacity:.35}
+.calendar-day.selected{border:2px solid #3978e8}
+.calendar-day.today{font-weight:700}
+.calendar-day strong{font-size:13px;line-height:15px}
+.calendar-day small{font-size:10px;font-weight:700;line-height:11px}
+.settings-option{width:100%;text-align:left;border:0;background:#f5f6f8;border-radius:10px;padding:14px;color:#202735}
 @media(max-width:390px){.grid{grid-template-columns:1fr}.full{grid-column:auto}}
 </style>
 </head>
@@ -78,14 +96,39 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
 <header>
   <div class="top">
     <button class="today-btn" onclick="goToday()">Oggi</button>
+    <button class="settings-btn" onclick="openSettings()">⚙️</button>
   </div>
   <div class="date-nav">
     <button onclick="moveDay(-1)">‹</button>
     <div id="dateTitle" onclick="openDate()"> </div>
     <button onclick="moveDay(1)">›</button>
   </div>
-  <input type="date" id="datePicker" onchange="selectDate(this.value)">
 </header>
+
+<div class="overlay" id="calendarOverlay" onclick="closeDate(event)">
+  <div class="popup" onclick="event.stopPropagation()">
+    <div class="popup-head">
+      <h2>Calendario</h2>
+      <button class="close-btn" onclick="closeDate()">×</button>
+    </div>
+    <div class="calendar-nav">
+      <button onclick="changeCalendarMonth(-1)">‹</button>
+      <span class="calendar-month" id="calendarMonth"></span>
+      <button onclick="changeCalendarMonth(1)">›</button>
+    </div>
+    <div class="calendar-grid" id="calendarGrid"></div>
+  </div>
+</div>
+
+<div class="overlay" id="settingsOverlay" onclick="closeSettings(event)">
+  <div class="popup" onclick="event.stopPropagation()">
+    <div class="popup-head">
+      <h2>Impostazioni</h2>
+      <button class="close-btn" onclick="closeSettings()">×</button>
+    </div>
+    <button class="settings-option" onclick="openShiftManagement()">◷ Gestione turni</button>
+  </div>
+</div>
 
 <main>
   <section class="card">
@@ -241,7 +284,6 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
 
 <div class="menu" id="addMenu">
   <button onclick="openTaskForm()">✓ Nuova attività</button>
-  <button onclick="openShiftManagement()">◷ Gestisci turni</button>
   <button onclick="openSectionForm()">☰ Nuova lista</button>
 </div>
 
@@ -269,6 +311,7 @@ let data={
   activityChecks:read('activityChecks',{})
 };
 let selected=today(),cycleDraft=[],sectionDraft=[];
+let calendarMonth=parseDate(selected);
 
 function persist(){
   for(let k in data)write(k,data[k]);
@@ -280,11 +323,59 @@ function dateLabel(s){
   return parseDate(s).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 }
 function openDate(){
-  $('datePicker').value=selected;
-  $('datePicker').showPicker? $('datePicker').showPicker():$('datePicker').click();
+  calendarMonth=parseDate(selected);
+  renderCalendar();
+  $('calendarOverlay').classList.add('show');
 }
-function selectDate(s){
-  if(s){selected=s;render();}
+function closeDate(event){
+  if(!event||event.target===$('calendarOverlay'))$('calendarOverlay').classList.remove('show');
+}
+function changeCalendarMonth(n){
+  calendarMonth.setMonth(calendarMonth.getMonth()+n);
+  renderCalendar();
+}
+function renderCalendar(){
+  $('calendarMonth').textContent=calendarMonth.toLocaleDateString('it-IT',{month:'long',year:'numeric'});
+  let year=calendarMonth.getFullYear(),month=calendarMonth.getMonth();
+  let first=new Date(year,month,1);
+  let offset=(first.getDay()+6)%7;
+  let days=new Date(year,month+1,0).getDate();
+  let previous=new Date(year,month,0).getDate();
+  let html=['L','M','M','G','V','S','D'].map(d=>`<div class="calendar-weekday">${d}</div>`).join('');
+  for(let i=0;i<42;i++){
+    let day,monthDate,other=false;
+    if(i<offset){
+      day=previous-offset+i+1;
+      monthDate=new Date(year,month-1,day);
+      other=true;
+    }else if(i>=offset+days){
+      day=i-offset-days+1;
+      monthDate=new Date(year,month+1,day);
+      other=true;
+    }else{
+      day=i-offset+1;
+      monthDate=new Date(year,month,day);
+    }
+    let date=dateStr(monthDate);
+    let shift=shiftFor(date);
+    let initial=shift?safe(shift.name.trim().charAt(0).toUpperCase()):'';
+    let style=shift?`style="background:${shift.color}25;color:${shift.color}"`:'';
+    html+=`<button class="calendar-day ${other?'other':''} ${date===selected?'selected':''} ${date===today()?'today':''}" ${style} onclick="selectCalendarDate('${date}')">
+      <strong>${day}</strong>${shift?`<small>${initial}</small>`:''}
+    </button>`;
+  }
+  $('calendarGrid').innerHTML=html;
+}
+function selectCalendarDate(date){
+  selected=date;
+  $('calendarOverlay').classList.remove('show');
+  render();
+}
+function openSettings(){
+  $('settingsOverlay').classList.add('show');
+}
+function closeSettings(event){
+  if(!event||event.target===$('settingsOverlay'))$('settingsOverlay').classList.remove('show');
 }
 function moveDay(n){selected=addDays(selected,n);render()}
 function goToday(){selected=today();render()}
@@ -292,12 +383,12 @@ function toggleMenu(){
   $('addMenu').classList.toggle('show');
 }
 function closeForms(){
-  ['taskForm','sectionForm','shiftForm'].forEach(id=>{
-    if($(id))$(id).classList.remove('show');
+  ['taskForm','sectionForm'].forEach(id=>{
+    $(id).classList.remove('show');
+    $(id).style.display='none';
   });
-  $('taskForm').style.display='none';
-  $('sectionForm').style.display='none';
-  $('shiftForm').style.display='none';
+  $('shiftForm').classList.remove('show');
+  $('shiftForm').style.display='';
   $('addMenu').classList.remove('show');
 }
 function showForm(id){
@@ -555,12 +646,14 @@ function deleteSection(id){
   delete data.items[id];persist();renderSections();
 }
 function openShiftManagement(){
+  $('settingsOverlay').classList.remove('show');
   closeForms();
   $('shiftManagement').style.display='block';
   $('shiftManagement').scrollIntoView({behavior:'smooth',block:'start'});
   renderShifts();
 }
 function openShiftForm(){
+  $('shiftForm').style.display='block';
   $('shiftForm').classList.add('show');
   $('shiftName').value='';$('shiftStart').value='06:00';
   $('shiftEnd').value='14:00';$('shiftColor').value='#e7b83f';
@@ -593,12 +686,13 @@ function changeShiftColor(id,color){
   let s=data.shifts.find(s=>s.id===id);
   if(s)s.color=color;
   persist();render();
+  if($('calendarOverlay').classList.contains('show'))renderCalendar();
 }
 function deleteShift(id){
   if(data.cycle&&data.cycle.days.includes(id))return alert('Questo turno è nella rotazione. Rimuovi prima la rotazione.');
   if(!confirm('Eliminare questo tipo di turno?'))return;
   data.shifts=data.shifts.filter(s=>s.id!==id);
-  persist();renderShifts();
+  persist();renderShifts();render();
 }
 function addCycleDay(){
   if(!data.shifts.length)return alert('Crea prima almeno un tipo di turno.');
@@ -625,10 +719,12 @@ function saveCycle(){
   if(!repeats||repeats<1)return alert('Inserisci un numero valido di ripetizioni.');
   data.cycle={start,days:[...cycleDraft],repeats};
   persist();renderShifts();render();alert('Rotazione salvata.');
+  if($('calendarOverlay').classList.contains('show'))renderCalendar();
 }
 function clearCycle(){
   if(!confirm('Rimuovere la rotazione dei turni?'))return;
   data.cycle=null;cycleDraft=[];persist();renderShifts();render();
+  if($('calendarOverlay').classList.contains('show'))renderCalendar();
 }
 $('cycleRepeats').addEventListener('input',renderCycle);
 render();
