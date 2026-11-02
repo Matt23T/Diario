@@ -159,7 +159,7 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
         <select id="taskFreq" onchange="toggleCustom('task')">
           <option value="once">Solo questo giorno</option>
           <option value="daily">Tutti i giorni</option>
-          <option value="every">Ogni N giorni</option>
+          <option value="every">Ogni tot giorni</option>
           <option value="weekly">Ogni settimana</option>
           <option value="monthly">Ogni mese</option>
         </select>
@@ -182,14 +182,16 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
   </section>
 
   <section class="card" id="sectionForm" style="display:none">
-    <div class="card-head"><h2>Nuova sezione</h2></div>
-    <label>Titolo della sezione</label>
+    <div class="card-head"><h2>Nuova attività</h2></div>
+    <label>Nome dell'attività</label>
     <input id="sectionName" placeholder="Es. Spesa">
+    <label>Orario (facoltativo)</label>
+    <input id="sectionTime" type="time">
     <label>Ripetizione</label>
     <select id="sectionFreq" onchange="toggleCustom('section')">
       <option value="once">Solo questo giorno</option>
       <option value="daily">Tutti i giorni</option>
-      <option value="every">Ogni N giorni</option>
+      <option value="every">Ogni tot giorni</option>
       <option value="weekly">Ogni settimana</option>
       <option value="monthly">Ogni mese</option>
     </select>
@@ -208,14 +210,14 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
       </div>
     </div>
     <div id="sectionItems">
-      <label>Elenco della sezione</label>
+      <label>Elenco attività</label>
       <div id="sectionItemList"></div>
       <div class="item-add">
         <input id="sectionItemInput" placeholder="Scrivi un elemento">
         <button class="secondary" onclick="addSectionDraftItem()">+</button>
       </div>
     </div>
-    <button class="primary" onclick="saveSection()">Salva sezione</button>
+    <button class="primary" onclick="saveSection()">Salva attività</button>
     <button class="cancel" onclick="closeForms()">Annulla</button>
   </section>
 </main>
@@ -223,7 +225,7 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
 <div class="menu" id="addMenu">
   <button onclick="openTaskForm()">✓ Nuova task</button>
   <button onclick="openShiftManagement()">◷ Gestisci turni</button>
-  <button onclick="openSectionForm()">☰ Nuova sezione</button>
+  <button onclick="openSectionForm()">☰ Nuova attività</button>
 </div>
 
 <div class="bottom">
@@ -318,12 +320,14 @@ function renderTimeline(){
   let shift=shiftFor(selected);
   $('shiftSummary').textContent=shift?shift.name:'';
   let tasks=data.tasks.filter(t=>occurs(t,selected)).sort((a,b)=>a.time.localeCompare(b.time));
+  let timedSections=data.sections.filter(s=>s.time&&occurs(s,selected));
   let html='';
   for(let h=0;h<24;h++){
     let start=shift?Number(shift.start.slice(0,2))+Number(shift.start.slice(3))/60:0;
     let end=shift?Number(shift.end.slice(0,2))+Number(shift.end.slice(3))/60:0;
     let active=shift&&(start<end?(h>=start&&h<end):(h>=start||h<end));
     let hourTasks=tasks.filter(t=>Number(t.time.slice(0,2))===h);
+    let hourSections=timedSections.filter(s=>Number(s.time.slice(0,2))===h);
     html+=`<div class="hour">
       <span class="hour-label">${String(h).padStart(2,'0')}:00</span>
       ${active?`<div class="shift-bg" style="background:${shift.color};border-color:${shift.color}"></div>`:''}
@@ -338,6 +342,12 @@ function renderTimeline(){
             <button class="icon-btn" onclick="deleteTask('${t.id}')">×</button>
           </div>`;
         }).join('')}
+        ${hourSections.map(s=>`
+          <div class="task">
+            <span class="task-name">${safe(s.name)}</span>
+            <span class="muted">${s.time}</span>
+          </div>
+        `).join('')}
       </div>
     </div>`;
   }
@@ -366,7 +376,7 @@ function renderSections(){
         <button class="secondary" onclick="addItem('${s.id}')">+</button>
       </div>
     </div>`;
-  }).join(''):'<div class="empty">Nessuna sezione per questo giorno.</div>';
+  }).join(''):'<div class="empty">Nessuna attività per questo giorno.</div>';
 }
 function openTaskForm(){
   showForm('taskForm');
@@ -394,7 +404,7 @@ function deleteTask(id){
 }
 function openSectionForm(){
   showForm('sectionForm');
-  $('sectionName').value='';$('sectionFreq').value='once';
+  $('sectionName').value='';$('sectionTime').value='';$('sectionFreq').value='once';
   $('sectionEveryBox').style.display='none';
   $('sectionEvery').value=2;$('sectionStart').value=selected;$('sectionEnd').value='';
   sectionDraft=[];renderSectionDraft();
@@ -413,12 +423,12 @@ function renderSectionDraft(){
 function removeSectionDraftItem(i){sectionDraft.splice(i,1);renderSectionDraft()}
 function saveSection(){
   let name=$('sectionName').value.trim();
-  if(!name)return alert('Inserisci il titolo della sezione.');
+  if(!name)return alert('Inserisci il nome dell’attività.');
   let start=$('sectionStart').value||selected,end=$('sectionEnd').value;
   if(end&&end<start)return alert('La data finale precede quella iniziale.');
   let id=uid();
-  data.sections.push({id,name,freq:$('sectionFreq').value,
-    every:Number($('sectionEvery').value)||2,start,end});
+  data.sections.push({id,name,time:$('sectionTime').value,
+    freq:$('sectionFreq').value,every:Number($('sectionEvery').value)||2,start,end});
   data.items[id]=sectionDraft.map(text=>({id:uid(),text,done:false}));
   persist();closeForms();render();
 }
@@ -443,7 +453,7 @@ function deleteItem(sid,iid){
   persist();renderSections();$('items_'+sid).style.display='block';
 }
 function deleteSection(id){
-  if(!confirm('Eliminare questa sezione e il suo contenuto?'))return;
+  if(!confirm('Eliminare questa attività e il suo contenuto?'))return;
   data.sections=data.sections.filter(s=>s.id!==id);
   delete data.items[id];persist();renderSections();
 }
