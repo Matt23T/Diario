@@ -142,7 +142,7 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
     </div>
     <button class="settings-option" onclick="openShiftManagement()">◷ Gestione turni</button>
     <button class="settings-option" onclick="openActivityManager()">✎ Modifica liste / attività</button>
-    <button class="settings-option" onclick="openHistory()">▤ Storico attività completate</button>
+    <button class="settings-option" onclick="openHistory()">▤ Storico attività</button>
   </div>
 </div>
 
@@ -223,12 +223,12 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
     <div id="activityManagerList"></div>
   </section>
 
-  <section class="card" id="history" style="display:none">
+  <section class="card" id="activityHistory" style="display:none">
     <div class="card-head">
-      <h2>Storico attività completate</h2>
+      <h2>Storico attività</h2>
       <button class="secondary" onclick="closeHistory()">Chiudi</button>
     </div>
-    <div id="historyList"></div>
+    <div id="activityHistoryList"></div>
   </section>
 
   <section class="card" id="taskForm" style="display:none">
@@ -383,30 +383,10 @@ function safe(s){
 function dateLabel(s){
   return parseDate(s).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 }
-function archiveActivity(type,id,name,day){
+function saveArchive(type,id,day,name,time,done){
   let key=type+'_'+id+'_'+day;
   data.archive=data.archive.filter(x=>x.key!==key);
-  data.archive.push({key,type,name,day});
-}
-function openHistory(){
-  $('settingsOverlay').classList.remove('show');
-  $('shiftManagement').style.display='none';
-  $('activityManager').style.display='none';
-  $('history').style.display='block';
-  renderHistory();
-  $('history').scrollIntoView({behavior:'smooth',block:'start'});
-}
-function closeHistory(){
-  $('history').style.display='none';
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-function renderHistory(){
-  let list=[...data.archive].sort((a,b)=>a.day.localeCompare(b.day));
-  $('historyList').innerHTML=list.length?list.map(x=>`
-    <div class="manager-row">
-      <strong>${safe(x.name)}</strong>
-      <div class="manager-info">${x.type==='task'?'Attività':'Lista'} · ${dateLabel(x.day)}</div>
-    </div>`).join(''):'<div class="empty">Non hai ancora completato attività.</div>';
+  if(done)data.archive.push({key,type,id,day,name,time:time||''});
 }
 function openDate(){
   calendarMonth=parseDate(selected);
@@ -460,8 +440,8 @@ function selectCalendarDate(date){
 }
 function openSettings(){
   closeActivityManager();
-  closeHistory();
   $('shiftManagement').style.display='none';
+  $('activityHistory').style.display='none';
   $('settingsOverlay').classList.add('show');
 }
 function closeSettings(event){
@@ -550,15 +530,9 @@ function shiftFor(day){
 function checkKey(id,day){return id+'_'+day}
 function isChecked(id,day){return !!data.checks[checkKey(id,day)]}
 function setChecked(id,day,val){
-  let k=checkKey(id,day);
-  let task=data.tasks.find(t=>t.id===id);
-  if(val){
-    data.checks[k]=true;
-    if(task)archiveActivity('task',id,task.name,day);
-  }else{
-    delete data.checks[k];
-    data.archive=data.archive.filter(x=>x.key!=='task_'+id+'_'+day);
-  }
+  let k=checkKey(id,day),task=data.tasks.find(t=>t.id===id);
+  if(val)data.checks[k]=true;else delete data.checks[k];
+  if(task)saveArchive('task',id,day,task.name,task.time,val);
   persist();render();
 }
 function timeMinutes(t){
@@ -848,10 +822,8 @@ function toggleItem(sid,iid,done,day){
       else delete data.activityChecks[key];
     }
     let list=data.items[sid]||[];
-    if(done&&list.length&&list.every(i=>isItemChecked(sid,i,day)))
-      archiveActivity('section',sid,section.name,day);
-    else
-      data.archive=data.archive.filter(x=>x.key!=='section_'+sid+'_'+day);
+    let completed=list.length>0&&list.every(i=>isItemChecked(sid,i,day));
+    saveArchive('list',sid,day,section.name,section.time,completed);
     persist();renderSections();$('items_'+sid).style.display='block';
   }
 }
@@ -868,7 +840,7 @@ function openShiftManagement(){
   $('settingsOverlay').classList.remove('show');
   closeForms();
   $('activityManager').style.display='none';
-  $('history').style.display='none';
+  $('activityHistory').style.display='none';
   $('shiftManagement').style.display='block';
   $('shiftManagement').scrollIntoView({behavior:'smooth',block:'start'});
   renderShifts();
@@ -877,7 +849,7 @@ function openActivityManager(){
   $('settingsOverlay').classList.remove('show');
   closeForms();
   $('shiftManagement').style.display='none';
-  $('history').style.display='none';
+  $('activityHistory').style.display='none';
   $('activityManager').style.display='block';
   renderActivityManager();
   $('activityManager').scrollIntoView({behavior:'smooth',block:'start'});
@@ -900,21 +872,80 @@ function repeatLabel(obj){
   if(obj.freq==='monthly')return 'Routine · Ogni mese';
   return '';
 }
+function hasFutureOccurrence(obj){
+  let start=addDays(today(),1);
+  for(let i=0;i<366;i++){
+    let day=addDays(start,i);
+    if(obj.end&&day>obj.end)return false;
+    if(occurs(obj,day))return true;
+  }
+  return false;
+}
+function taskVisibleInManager(t){
+  let mode=t.mode||(t.freq==='once'?(t.carryOver===true?'carry':'once'):'routine');
+  if(mode==='routine')return hasFutureOccurrence(t);
+  if(isChecked(t.id,t.start))return false;
+  return true;
+}
+function sectionVisibleInManager(s){
+  if(s.freq==='once'){
+    let list=data.items[s.id]||[];
+    if(list.length&&list.every(i=>isItemChecked(s.id,i,s.start)))return false;
+  }
+  return s.freq==='once'||hasFutureOccurrence(s);
+}
 function renderActivityManager(){
   let list=[
-    ...data.tasks.filter(x=>x.mode==='routine'||!data.archive.some(a=>a.type==='task'&&a.key.startsWith('task_'+x.id+'_'))).map(x=>({...x,type:'task'})),
-    ...data.sections.map(x=>({...x,type:'section'}))
+    ...data.tasks.filter(taskVisibleInManager).map(x=>({...x,type:'task'})),
+    ...data.sections.filter(sectionVisibleInManager).map(x=>({...x,type:'section'}))
   ].sort((a,b)=>(a.start||'').localeCompare(b.start||'')||(a.time||'').localeCompare(b.time||''));
   $('activityManagerList').innerHTML=list.length?list.map(x=>`
     <div class="manager-row">
       <strong>${safe(x.name)}</strong>
       <div class="manager-info">${x.type==='task'?'Attività':'Lista'} · ${dateLabel(x.start)}${x.time?' · '+x.time:''}${x.timeEnd?'–'+x.timeEnd:''}${x.end?' · Fino al '+dateLabel(x.end):''}<br>${x.type==='task'?repeatLabel(x):repeatLabel(x)}</div>
       <button class="secondary" onclick="${x.type==='task'?'editTask':'editSection'}('${x.id}')">Modifica</button>
-    </div>`).join(''):'<div class="empty">Non ci sono liste o attività.</div>';
+    </div>`).join(''):'<div class="empty">Non ci sono liste o attività da modificare.</div>';
+}
+function renderHistory(){
+  let history=[...data.archive];
+  Object.entries(data.checks).forEach(([key,done])=>{
+    if(!done)return;
+    let pos=key.lastIndexOf('_'),id=key.slice(0,pos),day=key.slice(pos+1);
+    let task=data.tasks.find(t=>t.id===id);
+    if(task&&!history.some(x=>x.key==='task_'+id+'_'+day))
+      history.push({key:'task_'+id+'_'+day,type:'task',id,day,name:task.name,time:task.time||''});
+  });
+  Object.entries(data.activityChecks).forEach(([key,done])=>{
+    if(!done)return;
+    let parts=key.split('_'),day=parts.pop(),iid=parts.pop(),sid=parts.join('_');
+    let section=data.sections.find(s=>s.id===sid),list=data.items[sid]||[];
+    if(section&&list.length&&list.every(i=>data.activityChecks[itemCheckKey(sid,i.id,day)])&&
+      !history.some(x=>x.key==='list_'+sid+'_'+day))
+      history.push({key:'list_'+sid+'_'+day,type:'list',id:sid,day,name:section.name,time:section.time||''});
+  });
+  history.sort((a,b)=>a.day.localeCompare(b.day));
+  $('activityHistoryList').innerHTML=history.length?history.map(x=>`
+    <div class="manager-row">
+      <strong>${safe(x.name)}</strong>
+      <div class="manager-info">${x.type==='task'?'Attività':'Lista'} · ${dateLabel(x.day)}${x.time?' · '+x.time:''}</div>
+    </div>`).join(''):'<div class="empty">Non hai ancora completato attività.</div>';
+}
+function openHistory(){
+  $('settingsOverlay').classList.remove('show');
+  closeForms();
+  $('shiftManagement').style.display='none';
+  $('activityManager').style.display='none';
+  $('activityHistory').style.display='block';
+  renderHistory();
+  $('activityHistory').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function closeHistory(){
+  $('activityHistory').style.display='none';
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 function editTask(id){
   let t=data.tasks.find(t=>t.id===id);
-  if(!t)return;
+  if(!t||!taskVisibleInManager(t))return;
   showForm('taskForm');editingTaskId=id;
   $('taskForm').querySelector('h2').textContent='Modifica attività';
   $('taskName').value=t.name;$('taskTime').value=t.time||'';
@@ -934,7 +965,7 @@ function editTask(id){
 }
 function editSection(id){
   let s=data.sections.find(s=>s.id===id);
-  if(!s)return;
+  if(!s||!sectionVisibleInManager(s))return;
   showForm('sectionForm');editingSectionId=id;
   $('sectionForm').querySelector('h2').textContent='Modifica lista';
   $('sectionName').value=s.name;$('sectionTime').value=s.time||'';
