@@ -142,6 +142,7 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
     </div>
     <button class="settings-option" onclick="openShiftManagement()">◷ Gestione turni</button>
     <button class="settings-option" onclick="openActivityManager()">✎ Modifica liste / attività</button>
+    <button class="settings-option" onclick="openHistory()">▤ Storico attività completate</button>
   </div>
 </div>
 
@@ -220,6 +221,14 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
       <button class="secondary" onclick="closeActivityManager()">Chiudi</button>
     </div>
     <div id="activityManagerList"></div>
+  </section>
+
+  <section class="card" id="history" style="display:none">
+    <div class="card-head">
+      <h2>Storico attività completate</h2>
+      <button class="secondary" onclick="closeHistory()">Chiudi</button>
+    </div>
+    <div id="historyList"></div>
   </section>
 
   <section class="card" id="taskForm" style="display:none">
@@ -358,7 +367,8 @@ let data={
   sections:read('sections',[]),
   checks:read('checks',{}),
   items:read('items',{}),
-  activityChecks:read('activityChecks',{})
+  activityChecks:read('activityChecks',{}),
+  archive:read('archive',[])
 };
 let selected=today(),cycleDraft=[],sectionDraft=[],sectionEditItems=null;
 let editingTaskId=null,editingSectionId=null;
@@ -372,6 +382,31 @@ function safe(s){
 }
 function dateLabel(s){
   return parseDate(s).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+function archiveActivity(type,id,name,day){
+  let key=type+'_'+id+'_'+day;
+  data.archive=data.archive.filter(x=>x.key!==key);
+  data.archive.push({key,type,name,day});
+}
+function openHistory(){
+  $('settingsOverlay').classList.remove('show');
+  $('shiftManagement').style.display='none';
+  $('activityManager').style.display='none';
+  $('history').style.display='block';
+  renderHistory();
+  $('history').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function closeHistory(){
+  $('history').style.display='none';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function renderHistory(){
+  let list=[...data.archive].sort((a,b)=>a.day.localeCompare(b.day));
+  $('historyList').innerHTML=list.length?list.map(x=>`
+    <div class="manager-row">
+      <strong>${safe(x.name)}</strong>
+      <div class="manager-info">${x.type==='task'?'Attività':'Lista'} · ${dateLabel(x.day)}</div>
+    </div>`).join(''):'<div class="empty">Non hai ancora completato attività.</div>';
 }
 function openDate(){
   calendarMonth=parseDate(selected);
@@ -425,6 +460,7 @@ function selectCalendarDate(date){
 }
 function openSettings(){
   closeActivityManager();
+  closeHistory();
   $('shiftManagement').style.display='none';
   $('settingsOverlay').classList.add('show');
 }
@@ -515,7 +551,14 @@ function checkKey(id,day){return id+'_'+day}
 function isChecked(id,day){return !!data.checks[checkKey(id,day)]}
 function setChecked(id,day,val){
   let k=checkKey(id,day);
-  if(val)data.checks[k]=true;else delete data.checks[k];
+  let task=data.tasks.find(t=>t.id===id);
+  if(val){
+    data.checks[k]=true;
+    if(task)archiveActivity('task',id,task.name,day);
+  }else{
+    delete data.checks[k];
+    data.archive=data.archive.filter(x=>x.key!=='task_'+id+'_'+day);
+  }
   persist();render();
 }
 function timeMinutes(t){
@@ -804,6 +847,11 @@ function toggleItem(sid,iid,done,day){
       if(done)data.activityChecks[key]=true;
       else delete data.activityChecks[key];
     }
+    let list=data.items[sid]||[];
+    if(done&&list.length&&list.every(i=>isItemChecked(sid,i,day)))
+      archiveActivity('section',sid,section.name,day);
+    else
+      data.archive=data.archive.filter(x=>x.key!=='section_'+sid+'_'+day);
     persist();renderSections();$('items_'+sid).style.display='block';
   }
 }
@@ -820,6 +868,7 @@ function openShiftManagement(){
   $('settingsOverlay').classList.remove('show');
   closeForms();
   $('activityManager').style.display='none';
+  $('history').style.display='none';
   $('shiftManagement').style.display='block';
   $('shiftManagement').scrollIntoView({behavior:'smooth',block:'start'});
   renderShifts();
@@ -828,6 +877,7 @@ function openActivityManager(){
   $('settingsOverlay').classList.remove('show');
   closeForms();
   $('shiftManagement').style.display='none';
+  $('history').style.display='none';
   $('activityManager').style.display='block';
   renderActivityManager();
   $('activityManager').scrollIntoView({behavior:'smooth',block:'start'});
@@ -852,7 +902,7 @@ function repeatLabel(obj){
 }
 function renderActivityManager(){
   let list=[
-    ...data.tasks.map(x=>({...x,type:'task'})),
+    ...data.tasks.filter(x=>x.mode==='routine'||!data.archive.some(a=>a.type==='task'&&a.key.startsWith('task_'+x.id+'_'))).map(x=>({...x,type:'task'})),
     ...data.sections.map(x=>({...x,type:'section'}))
   ].sort((a,b)=>(a.start||'').localeCompare(b.start||'')||(a.time||'').localeCompare(b.time||''));
   $('activityManagerList').innerHTML=list.length?list.map(x=>`
