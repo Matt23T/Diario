@@ -612,6 +612,7 @@ function toggleOverview(){
 }
 function renderTimeline(){
   let shift=shiftFor(selected);
+  let previousShift=shiftFor(addDays(selected,-1));
   $('shiftSummary').textContent=shift?shift.name:'';
   let tasks=data.tasks.filter(t=>occursTask(t,selected)).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
   let timedSections=data.sections.filter(s=>s.time&&occursSection(s,selected));
@@ -634,16 +635,19 @@ function renderTimeline(){
   for(let h=0;h<24;h++){
     let start=shift?Number(shift.start.slice(0,2))+Number(shift.start.slice(3))/60:0;
     let end=shift?Number(shift.end.slice(0,2))+Number(shift.end.slice(3))/60:0;
-    let active=shift&&(start<end?(h>=start&&h<end):(h>=start||h<end));
+    let previousStart=previousShift?Number(previousShift.start.slice(0,2))+Number(previousShift.start.slice(3))/60:0;
+    let previousEnd=previousShift?Number(previousShift.end.slice(0,2))+Number(previousShift.end.slice(3))/60:0;
+    let activeShift=shift&&(start<end?(h>=start&&h<end):h>=start)?shift:
+      previousShift&&previousStart>=previousEnd&&h<previousEnd?previousShift:null;
     let hourTasks=timedTasks.filter(t=>Number(t.time.slice(0,2))===h);
     let hourSections=timedSections.filter(s=>Number(s.time.slice(0,2))===h);
     let hourActivities=timedTasks.filter(t=>t.time&&t.timeEnd&&
       timeMinutes(t.time)<(h+1)*60&&timeMinutes(t.timeEnd)>h*60);
     html+=`<div class="hour">
       <span class="hour-label">${String(h).padStart(2,'0')}:00</span>
-      ${active?`<div class="shift-bg" style="background:${shift.color};border-color:${shift.color}"></div>`:''}
+      ${activeShift?`<div class="shift-bg" style="background:${activeShift.color};border-color:${activeShift.color}"></div>`:''}
       ${hourActivities.length?`<div class="activity-bg" style="background:${activityGradient(hourActivities,h)}"></div>`:''}
-      ${active&&h===Math.floor(start)?`<span class="shift-label" style="color:${shift.color}">${safe(shift.name)} · ${shift.start}–${shift.end}</span>`:''}
+      ${activeShift===shift&&activeShift&&h===Math.floor(start)?`<span class="shift-label" style="color:${shift.color}">${safe(shift.name)} · ${shift.start}–${shift.end}</span>`:''}
       <div class="hour-tasks">
         ${hourTasks.map(t=>{
           let done=isChecked(t.id,selected);
