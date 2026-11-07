@@ -180,12 +180,16 @@ label{display:block;font-size:13px;color:#626d7e;margin:12px 0 5px}
       <input id="shiftName" placeholder="Es. Mattina">
       <div class="grid">
         <div>
-          <label>Inizio</label>
+          <label>Ora di inizio</label>
           <input id="shiftStart" type="time" value="06:00">
         </div>
         <div>
-          <label>Fine</label>
-          <input id="shiftEnd" type="time" value="14:00">
+          <label>Durata · Ore</label>
+          <input id="shiftHours" type="number" min="0" max="24" value="8">
+        </div>
+        <div>
+          <label>Durata · Minuti</label>
+          <input id="shiftMinutes" type="number" min="0" max="59" value="0">
         </div>
         <div class="full">
           <label>Colore</label>
@@ -520,6 +524,15 @@ function isItemChecked(sid,item,day){
   if(section&&carriesOver(section))return !!item.done;
   return !!data.activityChecks[itemCheckKey(sid,item.id,day)];
 }
+function shiftDuration(s){
+  if(Number.isFinite(Number(s.duration)))return Number(s.duration);
+  let start=timeMinutes(s.start),end=timeMinutes(s.end);
+  return (end-start+1440)%1440;
+}
+function shiftEnd(s){
+  let end=(timeMinutes(s.start)+shiftDuration(s))%1440;
+  return String(Math.floor(end/60)).padStart(2,'0')+':'+String(end%60).padStart(2,'0');
+}
 function shiftFor(day){
   let c=data.cycle;
   if(!c||!c.days.length||day<c.start)return null;
@@ -632,18 +645,14 @@ function renderTimeline(){
       }).join('')}
     </div>`;
   }
+  let start=shift?timeMinutes(shift.start):0;
+  let duration=shift?shiftDuration(shift):0;
+  let previousStart=previousShift?timeMinutes(previousShift.start):0;
+  let previousEnd=previousShift?previousStart+shiftDuration(previousShift):0;
   for(let h=0;h<24;h++){
-    let start=shift?timeMinutes(shift.start):0;
-    let end=shift?timeMinutes(shift.end):0;
-    let previousStart=previousShift?timeMinutes(previousShift.start):0;
-    let previousEnd=previousShift?timeMinutes(previousShift.end):0;
     let minute=h*60;
-    let activeShift=null;
-    if(shift&&(start<end?(minute>=start&&minute<end):minute>=start)){
-      activeShift=shift;
-    }else if(previousShift&&previousStart>previousEnd&&minute<previousEnd){
-      activeShift=previousShift;
-    }
+    let activeShift=shift&&minute>=start&&minute<Math.min(start+duration,1440)?shift:
+      previousShift&&previousEnd>1440&&minute<previousEnd-1440?previousShift:null;
     let hourTasks=timedTasks.filter(t=>Number(t.time.slice(0,2))===h);
     let hourSections=timedSections.filter(s=>Number(s.time.slice(0,2))===h);
     let hourActivities=timedTasks.filter(t=>t.time&&t.timeEnd&&
@@ -652,7 +661,7 @@ function renderTimeline(){
       <span class="hour-label">${String(h).padStart(2,'0')}:00</span>
       ${activeShift?`<div class="shift-bg" style="background:${activeShift.color};border-color:${activeShift.color}"></div>`:''}
       ${hourActivities.length?`<div class="activity-bg" style="background:${activityGradient(hourActivities,h)}"></div>`:''}
-      ${activeShift===shift&&activeShift&&h===Math.floor(start/60)?`<span class="shift-label" style="color:${shift.color}">${safe(shift.name)} · ${shift.start}–${shift.end}</span>`:''}
+      ${activeShift===shift&&activeShift&&h===Math.floor(start/60)?`<span class="shift-label" style="color:${shift.color}">${safe(shift.name)} · ${shift.start}–${shiftEnd(shift)}</span>`:''}
       <div class="hour-tasks">
         ${hourTasks.map(t=>{
           let done=isChecked(t.id,selected);
@@ -999,20 +1008,25 @@ function openShiftForm(){
   $('shiftForm').style.display='block';
   $('shiftForm').classList.add('show');
   $('shiftName').value='';$('shiftStart').value='06:00';
-  $('shiftEnd').value='14:00';$('shiftColor').value='#e7b83f';
+  $('shiftHours').value=8;$('shiftMinutes').value=0;
+  $('shiftColor').value='#e7b83f';
 }
 function saveShift(){
   let name=$('shiftName').value.trim();
   if(!name)return alert('Inserisci il nome del turno.');
-  let s={id:uid(),name,start:$('shiftStart').value,end:$('shiftEnd').value,color:$('shiftColor').value};
-  if(s.start===s.end)return alert('Inizio e fine non possono coincidere.');
+  let hours=Number($('shiftHours').value),minutes=Number($('shiftMinutes').value);
+  if(!Number.isInteger(hours)||hours<0||hours>24||
+    !Number.isInteger(minutes)||minutes<0||minutes>59||
+    hours*60+minutes===0||hours*60+minutes>1440)
+    return alert('Inserisci una durata valida.');
+  let s={id:uid(),name,start:$('shiftStart').value,duration:hours*60+minutes,color:$('shiftColor').value};
   data.shifts.push(s);persist();closeForms();renderShifts();
 }
 function renderShifts(){
   $('shiftList').innerHTML=data.shifts.length?data.shifts.map(s=>`
     <div class="shift-row">
       <input type="color" value="${s.color}" onchange="changeShiftColor('${s.id}',this.value)">
-      <div class="shift-name"><strong>${safe(s.name)}</strong><small>${s.start} – ${s.end}</small></div>
+      <div class="shift-name"><strong>${safe(s.name)}</strong><small>${s.start} – ${shiftEnd(s)} (${Math.floor(shiftDuration(s)/60)}h ${shiftDuration(s)%60}m)</small></div>
       <button class="icon-btn" onclick="deleteShift('${s.id}')">×</button>
     </div>`).join(''):'<div class="empty">Crea i tuoi tipi di turno.</div>';
   $('cycleChoice').innerHTML=data.shifts.map(s=>`<option value="${s.id}">${safe(s.name)}</option>`).join('');
