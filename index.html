@@ -633,12 +633,17 @@ function renderTimeline(){
     </div>`;
   }
   for(let h=0;h<24;h++){
-    let start=shift?Number(shift.start.slice(0,2))+Number(shift.start.slice(3))/60:0;
-    let end=shift?Number(shift.end.slice(0,2))+Number(shift.end.slice(3))/60:0;
-    let previousStart=previousShift?Number(previousShift.start.slice(0,2))+Number(previousShift.start.slice(3))/60:0;
-    let previousEnd=previousShift?Number(previousShift.end.slice(0,2))+Number(previousShift.end.slice(3))/60:0;
-    let activeShift=shift&&(start<end?(h>=start&&h<end):h>=start)?shift:
-      previousShift&&previousStart>=previousEnd&&h<previousEnd?previousShift:null;
+    let start=shift?timeMinutes(shift.start):0;
+    let end=shift?timeMinutes(shift.end):0;
+    let previousStart=previousShift?timeMinutes(previousShift.start):0;
+    let previousEnd=previousShift?timeMinutes(previousShift.end):0;
+    let minute=h*60;
+    let activeShift=null;
+    if(shift&&(start<end?(minute>=start&&minute<end):minute>=start)){
+      activeShift=shift;
+    }else if(previousShift&&previousStart>previousEnd&&minute<previousEnd){
+      activeShift=previousShift;
+    }
     let hourTasks=timedTasks.filter(t=>Number(t.time.slice(0,2))===h);
     let hourSections=timedSections.filter(s=>Number(s.time.slice(0,2))===h);
     let hourActivities=timedTasks.filter(t=>t.time&&t.timeEnd&&
@@ -647,7 +652,7 @@ function renderTimeline(){
       <span class="hour-label">${String(h).padStart(2,'0')}:00</span>
       ${activeShift?`<div class="shift-bg" style="background:${activeShift.color};border-color:${activeShift.color}"></div>`:''}
       ${hourActivities.length?`<div class="activity-bg" style="background:${activityGradient(hourActivities,h)}"></div>`:''}
-      ${activeShift===shift&&activeShift&&h===Math.floor(start)?`<span class="shift-label" style="color:${shift.color}">${safe(shift.name)} · ${shift.start}–${shift.end}</span>`:''}
+      ${activeShift===shift&&activeShift&&h===Math.floor(start/60)?`<span class="shift-label" style="color:${shift.color}">${safe(shift.name)} · ${shift.start}–${shift.end}</span>`:''}
       <div class="hour-tasks">
         ${hourTasks.map(t=>{
           let done=isChecked(t.id,selected);
